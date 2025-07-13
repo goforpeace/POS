@@ -1,5 +1,6 @@
+
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +10,7 @@ import { ArrowUpRight, DollarSign, Package, ShoppingBag, Users } from 'lucide-re
 import FacebookLogo from '@/components/icons/FacebookLogo';
 import DeliveryLogo from '@/components/icons/DeliveryLogo';
 import { useInventory } from '@/context/inventory-context';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const StatCard = ({ title, value, icon, description }: { title: string; value: string; icon: React.ReactNode; description: string }) => (
   <Card>
@@ -25,21 +27,56 @@ const StatCard = ({ title, value, icon, description }: { title: string; value: s
 
 export default function DashboardPage() {
   const { sales, products } = useInventory();
-  const [timeFilter, setTimeFilter] = useState(7); // 7, 15, 30
+  const [timeFilter, setTimeFilter] = useState('7days');
+  const [shipmentFilter, setShipmentFilter] = useState('all');
+  const [yearFilter, setYearFilter] = useState(new Date().getFullYear().toString());
+  const [monthFilter, setMonthFilter] = useState((new Date().getMonth() + 1).toString());
 
-  const filterSalesByDays = (days: number) => {
-    const today = new Date();
-    const pastDate = new Date();
-    pastDate.setDate(today.getDate() - days);
-    return sales.filter(sale => sale.date >= pastDate);
-  };
+  const uniqueShipments = useMemo(() => ['all', ...Array.from(new Set(products.map(p => p.shipment)))], [products]);
+  const availableYears = useMemo(() => {
+    const years = new Set(sales.map(s => new Date(s.date).getFullYear()));
+    return Array.from(years).sort((a,b) => b-a);
+  }, [sales]);
+
+  const filteredProducts = useMemo(() => {
+    if (shipmentFilter === 'all') return products;
+    return products.filter(p => p.shipment === shipmentFilter);
+  }, [products, shipmentFilter]);
+
+  const filteredSales = useMemo(() => {
+    let tempSales = sales;
+
+    if (shipmentFilter !== 'all') {
+        tempSales = tempSales.filter(s => s.product.shipment === shipmentFilter);
+    }
+
+    const now = new Date();
+    switch (timeFilter) {
+      case '7days':
+        const sevenDaysAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
+        return tempSales.filter(s => new Date(s.date) >= sevenDaysAgo);
+      case '15days':
+        const fifteenDaysAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 15);
+        return tempSales.filter(s => new Date(s.date) >= fifteenDaysAgo);
+      case '30days':
+        const thirtyDaysAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30);
+        return tempSales.filter(s => new Date(s.date) >= thirtyDaysAgo);
+      case 'month':
+        return tempSales.filter(s => {
+          const saleDate = new Date(s.date);
+          return saleDate.getFullYear() === parseInt(yearFilter) && saleDate.getMonth() + 1 === parseInt(monthFilter);
+        });
+      case 'year':
+        return tempSales.filter(s => new Date(s.date).getFullYear() === parseInt(yearFilter));
+      default:
+        return tempSales;
+    }
+  }, [sales, timeFilter, shipmentFilter, yearFilter, monthFilter]);
   
-  const filteredSales = filterSalesByDays(timeFilter);
-
   const totalRevenue = filteredSales.reduce((acc, sale) => acc + sale.total, 0);
   const dailySales = sales.filter(s => new Date(s.date).toDateString() === new Date().toDateString()).reduce((acc, sale) => acc + sale.total, 0);
-  const totalStock = products.reduce((acc, p) => acc + p.quantity, 0);
-  const stockValue = products.reduce((acc, p) => acc + (p.buyPrice * p.quantity), 0);
+  const totalStock = filteredProducts.reduce((acc, p) => acc + p.quantity, 0);
+  const stockValue = filteredProducts.reduce((acc, p) => acc + (p.buyPrice * p.quantity), 0);
 
   const salesDataForChart = filteredSales.reduce((acc, sale) => {
     const date = new Date(sale.date).toLocaleDateString('en-CA');
@@ -55,12 +92,12 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <Card className="relative w-full h-64 overflow-hidden">
-        <Image src="/7492437.png" alt="Freesia Finds Banner" layout="fill" objectFit="cover" data-ai-hint="fashion boutique" />
-        <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center text-white p-4">
-          <h1 className="text-5xl font-headline font-bold">Welcome to Freesia Finds</h1>
+      <div className="flex flex-col items-center justify-center text-center p-4">
+          <h1 className="text-5xl font-headline font-bold" style={{ color: '#A74AC7' }}>Welcome to Freesia Finds</h1>
           <p className="mt-2 text-lg">Your Point of Sale & Inventory Dashboard</p>
         </div>
+      <Card className="relative w-full h-64 overflow-hidden">
+        <Image src="/7492437.png" alt="Freesia Finds Banner" layout="fill" objectFit="cover" data-ai-hint="fashion boutique" />
         <div className="absolute top-4 right-4 flex gap-2">
           <Button variant="secondary" size="icon" asChild>
             <Link href="https://facebook.com/freesia.finds" target="_blank">
@@ -77,19 +114,53 @@ export default function DashboardPage() {
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard title="Daily Sales" value={`Tk. ${dailySales.toLocaleString()}`} icon={<DollarSign className="h-4 w-4 text-muted-foreground" />} description="Total sales for today" />
-        <StatCard title="Total Sales" value={`Tk. ${totalRevenue.toLocaleString()}`} icon={<ShoppingBag className="h-4 w-4 text-muted-foreground" />} description={`Revenue for the last ${timeFilter} days`} />
-        <StatCard title="Total Stock" value={totalStock.toLocaleString()} icon={<Package className="h-4 w-4 text-muted-foreground" />} description="Total units available in stock" />
-        <StatCard title="Price of Stock" value={`Tk. ${stockValue.toLocaleString()}`} icon={<Users className="h-4 w-4 text-muted-foreground" />} description="Total value of current stock" />
+        <StatCard title="Total Sales" value={`Tk. ${totalRevenue.toLocaleString()}`} icon={<ShoppingBag className="h-4 w-4 text-muted-foreground" />} description="Based on current filters" />
+        <StatCard title="Total Stock" value={totalStock.toLocaleString()} icon={<Package className="h-4 w-4 text-muted-foreground" />} description="Based on shipment filter" />
+        <StatCard title="Price of Stock" value={`Tk. ${stockValue.toLocaleString()}`} icon={<Users className="h-4 w-4 text-muted-foreground" />} description="Value based on shipment filter" />
       </div>
 
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
+          <div className="flex flex-wrap justify-between items-center gap-4">
             <CardTitle>Sales Report</CardTitle>
-            <div className="flex items-center gap-2">
-              <Button variant={timeFilter === 7 ? 'default' : 'outline'} size="sm" onClick={() => setTimeFilter(7)}>Last 7 Days</Button>
-              <Button variant={timeFilter === 15 ? 'default' : 'outline'} size="sm" onClick={() => setTimeFilter(15)}>Last 15 Days</Button>
-              <Button variant={timeFilter === 30 ? 'default' : 'outline'} size="sm" onClick={() => setTimeFilter(30)}>Last 30 Days</Button>
+            <div className="flex flex-wrap items-center gap-2">
+                <Select onValueChange={setShipmentFilter} defaultValue={shipmentFilter}>
+                    <SelectTrigger className="w-[180px]"><SelectValue placeholder="Filter by Shipment" /></SelectTrigger>
+                    <SelectContent>
+                        {uniqueShipments.map(s => <SelectItem key={s} value={s}>{s === 'all' ? 'All Shipments' : s}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+
+                <Button variant={timeFilter === '7days' ? 'default' : 'outline'} size="sm" onClick={() => setTimeFilter('7days')}>Last 7 Days</Button>
+                <Button variant={timeFilter === '15days' ? 'default' : 'outline'} size="sm" onClick={() => setTimeFilter('15days')}>Last 15 Days</Button>
+                <Button variant={timeFilter === '30days' ? 'default' : 'outline'} size="sm" onClick={() => setTimeFilter('30days')}>Last 30 Days</Button>
+                <Button variant={timeFilter === 'month' ? 'default' : 'outline'} size="sm" onClick={() => setTimeFilter('month')}>Month</Button>
+                <Button variant={timeFilter === 'year' ? 'default' : 'outline'} size="sm" onClick={() => setTimeFilter('year')}>Year</Button>
+
+                {timeFilter === 'month' && (
+                     <>
+                        <Select onValueChange={setMonthFilter} defaultValue={monthFilter}>
+                            <SelectTrigger className="w-[120px]"><SelectValue placeholder="Month" /></SelectTrigger>
+                            <SelectContent>
+                                {Array.from({length: 12}, (_, i) => i + 1).map(m => <SelectItem key={m} value={m.toString()}>{new Date(0, m-1).toLocaleString('default', { month: 'long' })}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        <Select onValueChange={setYearFilter} defaultValue={yearFilter}>
+                            <SelectTrigger className="w-[100px]"><SelectValue placeholder="Year" /></SelectTrigger>
+                            <SelectContent>
+                                {availableYears.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                     </>
+                )}
+                {timeFilter === 'year' && (
+                    <Select onValueChange={setYearFilter} defaultValue={yearFilter}>
+                        <SelectTrigger className="w-[100px]"><SelectValue placeholder="Year" /></SelectTrigger>
+                        <SelectContent>
+                            {availableYears.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                )}
             </div>
           </div>
         </CardHeader>
@@ -112,3 +183,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    

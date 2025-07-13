@@ -1,3 +1,4 @@
+
 import type { Product, Sale } from './types';
 
 export const mockProducts: Product[] = [
@@ -5,6 +6,7 @@ export const mockProducts: Product[] = [
     id: 'prod1',
     image: 'https://placehold.co/400x400.png',
     title: 'Elegant Lace Dress',
+    shipment: '1st Shipment',
     quantity: 10,
     buyPrice: 1500,
     shippingCost: 100,
@@ -15,6 +17,7 @@ export const mockProducts: Product[] = [
     id: 'prod2',
     image: 'https://placehold.co/400x400.png',
     title: 'Casual Cotton Kurti',
+    shipment: '1st Shipment',
     quantity: 25,
     buyPrice: 800,
     shippingCost: 50,
@@ -25,6 +28,7 @@ export const mockProducts: Product[] = [
     id: 'prod3',
     image: 'https://placehold.co/400x400.png',
     title: 'Designer Silk Saree',
+    shipment: '2nd Shipment',
     quantity: 5,
     buyPrice: 5000,
     shippingCost: 200,
@@ -35,6 +39,7 @@ export const mockProducts: Product[] = [
     id: 'prod4',
     image: 'https://placehold.co/400x400.png',
     title: 'Hand-woven Scarf',
+    shipment: '2nd Shipment',
     quantity: 12,
     buyPrice: 300,
     shippingCost: 50,
@@ -72,3 +77,5 @@ export const mockSales: Sale[] = [
     date: new Date(new Date().setDate(new Date().getDate() - 5)),
   },
 ];
+
+    

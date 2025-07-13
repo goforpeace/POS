@@ -38,7 +38,8 @@ export default function ProductsPage() {
   const activeProducts = products.filter(p => p.status === 'active');
 
   const filteredProducts = activeProducts.filter(p =>
-    p.title.toLowerCase().includes(filter.toLowerCase())
+    p.title.toLowerCase().includes(filter.toLowerCase()) ||
+    p.shipment.toLowerCase().includes(filter.toLowerCase())
   );
   
   const handleReject = (productId: string) => {
@@ -68,7 +69,7 @@ export default function ProductsPage() {
           <div className="flex justify-between items-center">
             <CardTitle>Active Products</CardTitle>
             <Input
-              placeholder="Filter products..."
+              placeholder="Filter by title or shipment..."
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
               className="max-w-sm"
@@ -81,6 +82,7 @@ export default function ProductsPage() {
               <TableRow>
                 <TableHead className="w-20">Image</TableHead>
                 <TableHead>Title</TableHead>
+                <TableHead>Shipment</TableHead>
                 <TableHead className="text-right">Quantity</TableHead>
                 <TableHead className="text-right">Buy Price</TableHead>
                 <TableHead className="text-right">Shipping Cost</TableHead>
@@ -102,6 +104,7 @@ export default function ProductsPage() {
                     />
                   </TableCell>
                   <TableCell className="font-medium">{product.title}</TableCell>
+                  <TableCell>{product.shipment}</TableCell>
                   <TableCell className="text-right">{product.quantity}</TableCell>
                   <TableCell className="text-right">Tk. {product.buyPrice.toLocaleString()}</TableCell>
                   <TableCell className="text-right">Tk. {product.shippingCost.toLocaleString()}</TableCell>
@@ -163,7 +166,7 @@ export default function ProductsPage() {
           <DialogHeader>
             <DialogTitle>{productToView?.title}</DialogTitle>
              <DialogDescription>
-                Quantity in stock: {productToView?.quantity}
+                Shipment: {productToView?.shipment} | Quantity in stock: {productToView?.quantity}
               </DialogDescription>
           </DialogHeader>
           <div className="flex justify-center items-center p-4">
@@ -183,3 +186,5 @@ export default function ProductsPage() {
     </div>
   );
 }
+
+    

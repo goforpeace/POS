@@ -167,3 +167,5 @@ export const useInventory = () => {
 
 // Also exporting types to be used in components
 export type { Product, Sale };
+
+    

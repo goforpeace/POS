@@ -1,7 +1,9 @@
+
 export interface Product {
   id: string;
   image: string;
   title: string;
+  shipment: string;
   quantity: number;
   buyPrice: number;
   shippingCost: number;
@@ -24,3 +26,5 @@ export interface Sale {
   total: number;
   date: Date;
 }
+
+    
