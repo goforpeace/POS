@@ -6,11 +6,15 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
-import { ArrowUpRight, DollarSign, Package, ShoppingBag, Users } from 'lucide-react';
+import { ArrowUpRight, Calendar as CalendarIcon, DollarSign, Package, ShoppingBag, Users } from 'lucide-react';
 import FacebookLogo from '@/components/icons/FacebookLogo';
 import DeliveryLogo from '@/components/icons/DeliveryLogo';
 import { useInventory } from '@/context/inventory-context';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { DateRange } from 'react-day-picker';
+import { format } from 'date-fns';
 
 const StatCard = ({ title, value, icon, description }: { title: string; value: string; icon: React.ReactNode; description: string }) => (
   <Card>
@@ -31,6 +35,7 @@ export default function DashboardPage() {
   const [shipmentFilter, setShipmentFilter] = useState('all');
   const [yearFilter, setYearFilter] = useState(new Date().getFullYear().toString());
   const [monthFilter, setMonthFilter] = useState((new Date().getMonth() + 1).toString());
+  const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>();
 
   const uniqueShipments = useMemo(() => ['all', ...Array.from(new Set(products.map(p => p.shipment)))], [products]);
   const availableYears = useMemo(() => {
@@ -68,10 +73,20 @@ export default function DashboardPage() {
         });
       case 'year':
         return tempSales.filter(s => new Date(s.date).getFullYear() === parseInt(yearFilter));
+      case 'custom':
+        if (customDateRange?.from && customDateRange?.to) {
+          const from = new Date(customDateRange.from.setHours(0,0,0,0));
+          const to = new Date(customDateRange.to.setHours(23,59,59,999));
+          return tempSales.filter(s => {
+            const saleDate = new Date(s.date);
+            return saleDate >= from && saleDate <= to;
+          });
+        }
+        return [];
       default:
         return tempSales;
     }
-  }, [sales, timeFilter, shipmentFilter, yearFilter, monthFilter]);
+  }, [sales, timeFilter, shipmentFilter, yearFilter, monthFilter, customDateRange]);
   
   const totalRevenue = filteredSales.reduce((acc, sale) => acc + sale.total, 0);
   const dailySales = sales.filter(s => new Date(s.date).toDateString() === new Date().toDateString()).reduce((acc, sale) => acc + sale.total, 0);
@@ -137,6 +152,42 @@ export default function DashboardPage() {
                 <Button variant={timeFilter === 'month' ? 'default' : 'outline'} size="sm" onClick={() => setTimeFilter('month')}>Month</Button>
                 <Button variant={timeFilter === 'year' ? 'default' : 'outline'} size="sm" onClick={() => setTimeFilter('year')}>Year</Button>
 
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      id="date"
+                      variant={timeFilter === 'custom' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setTimeFilter('custom')}
+                      className="w-[240px] justify-start text-left font-normal"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {customDateRange?.from ? (
+                        customDateRange.to ? (
+                          <>
+                            {format(customDateRange.from, "LLL dd, y")} -{" "}
+                            {format(customDateRange.to, "LLL dd, y")}
+                          </>
+                        ) : (
+                          format(customDateRange.from, "LLL dd, y")
+                        )
+                      ) : (
+                        <span>Custom Range</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      initialFocus
+                      mode="range"
+                      defaultMonth={customDateRange?.from}
+                      selected={customDateRange}
+                      onSelect={setCustomDateRange}
+                      numberOfMonths={2}
+                    />
+                  </PopoverContent>
+                </Popover>
+
                 {timeFilter === 'month' && (
                      <>
                         <Select onValueChange={setMonthFilter} defaultValue={monthFilter}>
@@ -183,5 +234,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    
