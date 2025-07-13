@@ -148,7 +148,7 @@ export default function NewSalePage() {
         description: `Ready to create an invoice for ${values.products.length} products.`,
     });
     console.log(values);
-    // router.push(`/sales/invoice/${newSale.id}`);
+    // router.push(`/sales/invoice/${newSale.id});
   };
 
   return (
