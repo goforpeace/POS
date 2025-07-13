@@ -9,6 +9,7 @@ interface InventoryContextType {
   products: Product[];
   sales: Sale[];
   addProduct: (product: Omit<Product, 'id' | 'status'>) => void;
+  updateProduct: (productId: string, updatedData: Partial<Omit<Product, 'id'>>) => void;
   deleteProduct: (productId: string) => void;
   addSale: (sale: Omit<Sale, 'id' | 'date'>) => Sale;
   deleteSale: (saleId: string) => void;
@@ -96,6 +97,10 @@ export const InventoryProvider = ({ children }: { children: ReactNode }) => {
     setProducts(prev => [...prev, newProduct]);
   };
 
+  const updateProduct = (productId: string, updatedData: Partial<Omit<Product, 'id'>>) => {
+    setProducts(prev => prev.map(p => p.id === productId ? { ...p, ...updatedData } : p));
+  };
+
   const deleteProduct = (productId: string) => {
     setProducts(prev => prev.filter(p => p.id !== productId));
   };
@@ -151,7 +156,7 @@ export const InventoryProvider = ({ children }: { children: ReactNode }) => {
 
 
   return (
-    <InventoryContext.Provider value={{ products, sales, addProduct, deleteProduct, addSale, deleteSale, updateProductStatus, getProductById, getSaleById }}>
+    <InventoryContext.Provider value={{ products, sales, addProduct, updateProduct, deleteProduct, addSale, deleteSale, updateProductStatus, getProductById, getSaleById }}>
       {children}
     </InventoryContext.Provider>
   );
@@ -167,5 +172,3 @@ export const useInventory = () => {
 
 // Also exporting types to be used in components
 export type { Product, Sale };
-
-    

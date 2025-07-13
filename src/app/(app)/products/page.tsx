@@ -1,15 +1,18 @@
 
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useInventory, Product } from '@/context/inventory-context';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PackageX, Trash, Eye } from 'lucide-react';
+import { MoreHorizontal, PackageX, Trash, Eye, Pencil } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,14 +29,40 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
+  DialogClose,
 } from "@/components/ui/dialog"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+
+
+const editProductSchema = z.object({
+  title: z.string().min(3, 'Title must be at least 3 characters'),
+  shipment: z.string().min(1, 'Shipment info is required'),
+  quantity: z.coerce.number().min(0, 'Quantity cannot be negative'),
+  buyPrice: z.coerce.number().min(0, 'Buy price cannot be negative'),
+  shippingCost: z.coerce.number().min(0, 'Shipping cost cannot be negative'),
+  sellPrice: z.coerce.number().min(0, 'Sell price cannot be negative'),
+});
+
 
 export default function ProductsPage() {
-  const { products, updateProductStatus, deleteProduct } = useInventory();
+  const { products, updateProductStatus, deleteProduct, updateProduct } = useInventory();
   const [filter, setFilter] = useState('');
   const { toast } = useToast();
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [productToView, setProductToView] = useState<Product | null>(null);
+  const [productToEdit, setProductToEdit] = useState<Product | null>(null);
+
+  const form = useForm<z.infer<typeof editProductSchema>>({
+    resolver: zodResolver(editProductSchema),
+  });
+
+  useEffect(() => {
+    if (productToEdit) {
+      form.reset(productToEdit);
+    }
+  }, [productToEdit, form]);
+
 
   const activeProducts = products.filter(p => p.status === 'active');
 
@@ -58,6 +87,17 @@ export default function ProductsPage() {
           description: "The product has been permanently removed.",
       });
       setProductToDelete(null);
+    }
+  };
+
+  const handleEditSubmit = (values: z.infer<typeof editProductSchema>) => {
+    if (productToEdit) {
+      updateProduct(productToEdit.id, values);
+      toast({
+        title: 'Product Updated',
+        description: `${values.title} has been updated successfully.`,
+      });
+      setProductToEdit(null);
     }
   };
 
@@ -122,6 +162,10 @@ export default function ProductsPage() {
                             <Eye className="mr-2 h-4 w-4" />
                             <span>View</span>
                           </DropdownMenuItem>
+                           <DropdownMenuItem onClick={() => setProductToEdit(product)}>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            <span>Edit</span>
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleReject(product.id)}>
                             <PackageX className="mr-2 h-4 w-4" />
                             <span>Reject</span>
@@ -183,8 +227,110 @@ export default function ProductsPage() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={!!productToEdit} onOpenChange={(open) => !open && setProductToEdit(null)}>
+        <DialogContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleEditSubmit)}>
+              <DialogHeader>
+                <DialogTitle>Edit Product</DialogTitle>
+                <DialogDescription>
+                  Make changes to the product details below.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                 <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Product Title</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="shipment"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Shipment</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="quantity"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Quantity</FormLabel>
+                          <FormControl>
+                            <Input type="number" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                   <div className="grid grid-cols-3 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="buyPrice"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Buy Price</FormLabel>
+                            <FormControl>
+                              <Input type="number" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="shippingCost"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Ship Cost</FormLabel>
+                            <FormControl>
+                              <Input type="number" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                       <FormField
+                          control={form.control}
+                          name="sellPrice"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Sell Price</FormLabel>
+                              <FormControl>
+                                <Input type="number" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                   </div>
+              </div>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button type="button" variant="secondary">Cancel</Button>
+                </DialogClose>
+                <Button type="submit">Save Changes</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
-
-    
