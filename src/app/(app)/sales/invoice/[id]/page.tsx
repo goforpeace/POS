@@ -25,6 +25,8 @@ export default function InvoicePage() {
 
   const handlePrint = useReactToPrint({
     content: () => invoiceRef.current,
+    documentTitle: `Invoice-${sale?.id || 'details'}`,
+    onAfterPrint: () => console.log('Printed successfully!'),
   });
 
 
@@ -38,13 +40,6 @@ export default function InvoicePage() {
 
   return (
     <>
-      <style type="text/css" media="print">
-        {`
-          @page { size: auto; margin: 0; }
-          body { margin: 1.6cm; }
-          .print-hidden { display: none; }
-        `}
-      </style>
       <div className="flex justify-between items-center mb-6 print-hidden">
         <h1 className="text-3xl font-headline">Invoice Details</h1>
         <Button onClick={handlePrint}>
@@ -52,8 +47,26 @@ export default function InvoicePage() {
           Print / Download
         </Button>
       </div>
-      <div ref={invoiceRef}>
-        <Card id="invoice-content" className="w-full max-w-4xl mx-auto p-8 shadow-lg border-none">
+      <div ref={invoiceRef} className="print-area">
+        <style type="text/css" media="print">
+          {`
+            @page { 
+              size: auto; 
+              margin: 0mm; 
+            }
+            body {
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            .print-area {
+              margin: 20mm;
+            }
+            .print-hidden { 
+              display: none; 
+            }
+          `}
+        </style>
+        <Card id="invoice-content" className="w-full max-w-4xl mx-auto p-8 shadow-none border">
           <CardHeader className="flex flex-row justify-between items-start border-b pb-4">
               <div>
                   <FreesiaLogo />
