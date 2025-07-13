@@ -146,8 +146,8 @@ export default function InvoicePage() {
               </p>
             </div>
             <div className="mt-8 text-center text-sm text-muted-foreground">
-              <p>Thank you for your business!</p>
-              <p>If you have any questions, please contact us.</p>
+              <p>Thank you for choosing us!</p>
+              <p>If you have any questions, please contact us at www.facebook.com/freesia.finds .</p>
             </div>
           </CardContent>
         </Card>
