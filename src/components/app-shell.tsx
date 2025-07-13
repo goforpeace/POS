@@ -70,15 +70,15 @@ const AppShell = ({ children }: { children: React.ReactNode }) => {
             </SidebarMenuItem>
 
             <Collapsible>
-              <CollapsibleTrigger className='w-full'>
-                <SidebarMenuButton isActive={isActive('/products')} className='justify-between'>
-                  <div className='flex items-center gap-2'>
-                    <Package />
-                    <span>Products</span>
-                  </div>
-                  <ChevronDown className="h-4 w-4" />
+                <SidebarMenuButton asChild isActive={isActive('/products')} className='justify-between'>
+                    <CollapsibleTrigger className='w-full'>
+                        <div className='flex items-center gap-2'>
+                            <Package />
+                            <span>Products</span>
+                        </div>
+                        <ChevronDown className="h-4 w-4" />
+                    </CollapsibleTrigger>
                 </SidebarMenuButton>
-              </CollapsibleTrigger>
               <CollapsibleContent>
                 <SidebarMenu className="ml-4 my-1">
                   <SidebarMenuItem>
@@ -110,15 +110,15 @@ const AppShell = ({ children }: { children: React.ReactNode }) => {
             </Collapsible>
             
             <Collapsible>
-                <CollapsibleTrigger className='w-full'>
-                    <SidebarMenuButton isActive={isActive('/sales')} className='justify-between'>
+                <SidebarMenuButton asChild isActive={isActive('/sales')} className='justify-between'>
+                    <CollapsibleTrigger className='w-full'>
                         <div className='flex items-center gap-2'>
                           <ShoppingCart />
                           <span>Sales</span>
                         </div>
                         <ChevronDown className="h-4 w-4" />
-                    </SidebarMenuButton>
-                </CollapsibleTrigger>
+                    </CollapsibleTrigger>
+                </SidebarMenuButton>
                 <CollapsibleContent>
                     <SidebarMenu className="ml-4 my-1">
                         <SidebarMenuItem>
@@ -155,7 +155,7 @@ const AppShell = ({ children }: { children: React.ReactNode }) => {
           <div className="flex items-center justify-between p-2">
             <div className="flex items-center gap-2">
               <Avatar>
-                <AvatarImage src="https://placehold.co/100x100.png" />
+                <AvatarImage src="https://placehold.co/100x100.png" data-ai-hint="logo company" />
                 <AvatarFallback>FF</AvatarFallback>
               </Avatar>
               <span className="font-semibold">Store Manager</span>
