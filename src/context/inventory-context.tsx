@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
@@ -8,6 +9,7 @@ interface InventoryContextType {
   products: Product[];
   sales: Sale[];
   addProduct: (product: Omit<Product, 'id' | 'status'>) => void;
+  deleteProduct: (productId: string) => void;
   addSale: (sale: Omit<Sale, 'id' | 'date'>) => Sale;
   deleteSale: (saleId: string) => void;
   updateProductStatus: (productId: string, status: 'active' | 'rejected') => void;
@@ -60,7 +62,7 @@ export const InventoryProvider = ({ children }: { children: ReactNode }) => {
             }
             return max;
         }, 0);
-        setInvoiceCounter(maxId > 0 ? maxId : INITIAL_INVOICE_NUMBER);
+        setInvoiceCounter(maxId > 0 ? maxId + 1 : INITIAL_INVOICE_NUMBER);
       }
 
     } catch (error) {
@@ -92,6 +94,10 @@ export const InventoryProvider = ({ children }: { children: ReactNode }) => {
       status: 'active',
     };
     setProducts(prev => [...prev, newProduct]);
+  };
+
+  const deleteProduct = (productId: string) => {
+    setProducts(prev => prev.filter(p => p.id !== productId));
   };
 
   const addSale = (saleData: Omit<Sale, 'id' | 'date'>): Sale => {
@@ -145,7 +151,7 @@ export const InventoryProvider = ({ children }: { children: ReactNode }) => {
 
 
   return (
-    <InventoryContext.Provider value={{ products, sales, addProduct, addSale, deleteSale, updateProductStatus, getProductById, getSaleById }}>
+    <InventoryContext.Provider value={{ products, sales, addProduct, deleteProduct, addSale, deleteSale, updateProductStatus, getProductById, getSaleById }}>
       {children}
     </InventoryContext.Provider>
   );
