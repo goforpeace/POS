@@ -75,6 +75,7 @@ export default function RejectedProductsPage() {
                 <TableHead>Title</TableHead>
                 <TableHead className="text-right">Quantity</TableHead>
                 <TableHead className="text-right">Buy Price</TableHead>
+                <TableHead className="text-right">Shipping Cost</TableHead>
                 <TableHead className="w-12">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -94,6 +95,7 @@ export default function RejectedProductsPage() {
                   <TableCell className="font-medium">{product.title}</TableCell>
                   <TableCell className="text-right">{product.quantity}</TableCell>
                   <TableCell className="text-right">Tk. {product.buyPrice.toLocaleString()}</TableCell>
+                  <TableCell className="text-right">Tk. {product.shippingCost.toLocaleString()}</TableCell>
                   <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
