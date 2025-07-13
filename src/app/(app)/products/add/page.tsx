@@ -62,7 +62,7 @@ export default function AddProductPage() {
     const shipping = Number(shippingCost) || 0;
     const profitMargin = Number(markup) || 0;
     const calculatedSellPrice = (cost + shipping) * (1 + profitMargin / 100);
-    setValue('sellPrice', parseFloat(calculatedSellPrice.toFixed(2)));
+    setValue('sellPrice', Math.ceil(calculatedSellPrice));
   }, [buyPrice, shippingCost, markup, setValue]);
 
   // ✅ ensure rendering happens only on client
@@ -244,5 +244,3 @@ export default function AddProductPage() {
     </div>
   );
 }
-
-    
