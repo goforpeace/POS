@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
-import { ArrowUpRight, Calendar as CalendarIcon, DollarSign, Package, ShoppingBag, Users } from 'lucide-react';
+import { ArrowUpRight, Calendar as CalendarIcon, DollarSign, Package, ShoppingBag, Users, PackageX } from 'lucide-react';
 import FacebookLogo from '@/components/icons/FacebookLogo';
 import DeliveryLogo from '@/components/icons/DeliveryLogo';
 import { useInventory } from '@/context/inventory-context';
@@ -44,9 +44,13 @@ export default function DashboardPage() {
   }, [sales]);
 
   const filteredProducts = useMemo(() => {
-    if (shipmentFilter === 'all') return products;
-    return products.filter(p => p.shipment === shipmentFilter);
+    if (shipmentFilter === 'all') return products.filter(p => p.status === 'active');
+    return products.filter(p => p.shipment === shipmentFilter && p.status === 'active');
   }, [products, shipmentFilter]);
+
+  const rejectedStockValue = products
+    .filter(p => p.status === 'rejected')
+    .reduce((acc, p) => acc + (p.buyPrice + p.shippingCost) * p.quantity, 0);
 
   const filteredSales = useMemo(() => {
     let tempSales = sales;
@@ -127,11 +131,12 @@ export default function DashboardPage() {
         </div>
       </Card>
       
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <StatCard title="Daily Sales" value={`Tk. ${dailySales.toLocaleString()}`} icon={<DollarSign className="h-4 w-4 text-muted-foreground" />} description="Total sales for today" />
         <StatCard title="Total Sales" value={`Tk. ${totalRevenue.toLocaleString()}`} icon={<ShoppingBag className="h-4 w-4 text-muted-foreground" />} description="Based on current filters" />
-        <StatCard title="Total Stock" value={totalStock.toLocaleString()} icon={<Package className="h-4 w-4 text-muted-foreground" />} description="Based on shipment filter" />
-        <StatCard title="Price of Stock" value={`Tk. ${stockValue.toLocaleString()}`} icon={<Users className="h-4 w-4 text-muted-foreground" />} description="Value based on shipment filter" />
+        <StatCard title="Total Stock" value={totalStock.toLocaleString()} icon={<Package className="h-4 w-4 text-muted-foreground" />} description="Active stock" />
+        <StatCard title="Price of Stock" value={`Tk. ${stockValue.toLocaleString()}`} icon={<Users className="h-4 w-4 text-muted-foreground" />} description="Active stock value" />
+        <StatCard title="Rejected Stock Value" value={`Tk. ${rejectedStockValue.toLocaleString()}`} icon={<PackageX className="h-4 w-4 text-muted-foreground" />} description="Total value of rejected items" />
       </div>
 
       <Card>
