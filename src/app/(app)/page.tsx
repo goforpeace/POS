@@ -56,19 +56,19 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-6">
       <Card className="relative w-full h-64 overflow-hidden">
-        <Image src="https://placehold.co/1200x400.png" alt="Freesia Finds Banner" layout="fill" objectFit="cover" data-ai-hint="fashion boutique" />
+        <Image src="/7492437.png" alt="Freesia Finds Banner" layout="fill" objectFit="cover" data-ai-hint="fashion boutique" />
         <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center text-white p-4">
           <h1 className="text-5xl font-headline font-bold">Welcome to Freesia Finds</h1>
           <p className="mt-2 text-lg">Your Point of Sale & Inventory Dashboard</p>
         </div>
         <div className="absolute top-4 right-4 flex gap-2">
           <Button variant="secondary" size="icon" asChild>
-            <Link href="https://facebook.com" target="_blank">
+            <Link href="https://facebook.com/freesia.finds" target="_blank">
               <FacebookLogo className="w-5 h-5" />
             </Link>
           </Button>
           <Button variant="secondary" size="icon" asChild>
-            <Link href="#" target="_blank">
+            <Link href="https://merchant.pathao.com/courier/dashboard" target="_blank">
               <DeliveryLogo className="w-5 h-5" />
             </Link>
           </Button>
