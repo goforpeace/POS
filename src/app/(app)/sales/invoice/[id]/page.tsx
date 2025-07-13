@@ -1,3 +1,4 @@
+
 'use client';
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
@@ -22,46 +23,9 @@ export default function InvoicePage() {
     }
   }, [params.id, getSaleById]);
 
-  const handlePrint = () => {
-    if (invoiceRef.current) {
-      const printContent = invoiceRef.current.innerHTML;
-      const win = window.open('', '', 'width=900,height=650');
-      if (win) {
-        win.document.write(`
-          <html>
-            <head>
-              <title>Invoice-${sale?.id || 'details'}</title>
-              <style>
-                body {
-                  font-family: sans-serif;
-                  padding: 20px;
-                }
-                table {
-                  border-collapse: collapse;
-                  width: 100%;
-                }
-                table, th, td {
-                  border: 1px solid #ccc;
-                }
-                th, td {
-                  padding: 8px;
-                  text-align: left;
-                }
-                .print-area {
-                  margin: 0;
-                }
-              </style>
-            </head>
-            <body>${printContent}</body>
-          </html>
-        `);
-        win.document.close();
-        win.focus();
-        win.print();
-        win.close();
-      }
-    }
-  };
+  const handlePrint = useReactToPrint({
+    content: () => invoiceRef.current,
+  });
   
 
   if (!sale) {
@@ -72,20 +36,23 @@ export default function InvoicePage() {
     );
   }
 
+  const unitPrice = sale.product.sellPrice;
+  const subtotal = unitPrice * sale.quantity;
+
   return (
     <>
       <div className="flex justify-between items-center mb-6 print-hidden">
         <h1 className="text-3xl font-headline">Invoice Details</h1>
         <button
-  onClick={handlePrint}
-  className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90"
->
-  <Printer className="h-4 w-4" />
-  Print / Download
-</button>
+          onClick={handlePrint}
+          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90"
+        >
+          <Printer className="h-4 w-4" />
+          Print / Download
+        </button>
 
       </div>
-      <div ref={invoiceRef} className="print-area">
+      <div ref={invoiceRef}>
         <style type="text/css" media="print">
           {`
             @page { 
@@ -104,7 +71,7 @@ export default function InvoicePage() {
             }
           `}
         </style>
-        <Card id="invoice-content" className="w-full max-w-4xl mx-auto p-8 shadow-none border">
+        <Card id="invoice-content" className="w-full max-w-4xl mx-auto p-8 shadow-none border print-area">
           <CardHeader className="flex flex-row justify-between items-start border-b pb-4">
             <div>
               <FreesiaLogo />
@@ -142,10 +109,10 @@ export default function InvoicePage() {
                   <TableCell>{sale.product.title}</TableCell>
                   <TableCell className="text-center">{sale.quantity}</TableCell>
                   <TableCell className="text-right">
-                    Tk. {sale.product.sellPrice.toLocaleString()}
+                    Tk. {unitPrice.toLocaleString()}
                   </TableCell>
                   <TableCell className="text-right">
-                    Tk. {(sale.product.sellPrice * sale.quantity).toLocaleString()}
+                    Tk. {subtotal.toLocaleString()}
                   </TableCell>
                 </TableRow>
               </TableBody>
@@ -156,7 +123,7 @@ export default function InvoicePage() {
                 <div className="flex justify-between">
                   <span>Subtotal</span>
                   <span>
-                    Tk. {(sale.product.sellPrice * sale.quantity).toLocaleString()}
+                    Tk. {subtotal.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex justify-between">

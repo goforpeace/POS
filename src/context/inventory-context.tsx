@@ -5,13 +5,16 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import type { Product, Sale } from '@/lib/types';
 import { mockProducts, mockSales } from '@/lib/mock-data';
 
+// Define a new type for adding a sale that includes the optional unitPrice
+type AddSaleData = Omit<Sale, 'id' | 'date'> & { unitPrice?: number };
+
 interface InventoryContextType {
   products: Product[];
   sales: Sale[];
   addProduct: (product: Omit<Product, 'id' | 'status'>) => void;
   updateProduct: (productId: string, updatedData: Partial<Omit<Product, 'id'>>) => void;
   deleteProduct: (productId: string) => void;
-  addSale: (sale: Omit<Sale, 'id' | 'date'>) => Sale;
+  addSale: (sale: AddSaleData) => Sale;
   deleteSale: (saleId: string) => void;
   updateProductStatus: (productId: string, status: 'active' | 'rejected') => void;
   getProductById: (productId: string) => Product | undefined;
@@ -105,10 +108,21 @@ export const InventoryProvider = ({ children }: { children: ReactNode }) => {
     setProducts(prev => prev.filter(p => p.id !== productId));
   };
 
-  const addSale = (saleData: Omit<Sale, 'id' | 'date'>): Sale => {
+  const addSale = (saleData: AddSaleData): Sale => {
     const nextCounter = invoiceCounter + 1;
+    
+    // Create a copy of the product to store in the sale, with the potentially overridden price
+    const productForSale = {
+      ...saleData.product,
+      sellPrice: saleData.unitPrice !== undefined ? saleData.unitPrice : saleData.product.sellPrice,
+    };
+
     const newSale: Sale = {
-      ...saleData,
+      customer: saleData.customer,
+      product: productForSale,
+      quantity: saleData.quantity,
+      discount: saleData.discount,
+      total: saleData.total,
       id: `Inv-${nextCounter}`,
       date: new Date(),
     };

@@ -1,3 +1,4 @@
+
 'use client';
 import React, { useState } from 'react';
 import Image from 'next/image';
@@ -23,6 +24,7 @@ const newSaleSchema = z.object({
   customerAddress: z.string().min(5, 'Address is required'),
   productId: z.string({ required_error: 'Please select a product.' }),
   quantity: z.coerce.number().min(1, 'Quantity must be at least 1'),
+  sellPrice: z.coerce.number().min(0, 'Sell price cannot be negative'),
   discount: z.coerce.number().min(0).default(0),
 });
 
@@ -36,7 +38,9 @@ export default function NewSalePage() {
     resolver: zodResolver(newSaleSchema),
     defaultValues: {
       customerName: '', customerPhone: '', customerAddress: '',
-      quantity: 1, discount: 0
+      quantity: 1,
+      sellPrice: 0,
+      discount: 0
     },
   });
 
@@ -44,12 +48,14 @@ export default function NewSalePage() {
   const productId = watch('productId');
   const quantity = watch('quantity');
   const discount = watch('discount');
+  const sellPrice = watch('sellPrice');
 
   React.useEffect(() => {
     if (productId) {
       const product = getProductById(productId);
       if (product) {
         setSelectedProduct(product);
+        setValue('sellPrice', product.sellPrice);
         if (quantity > product.quantity) {
             setValue('quantity', product.quantity)
         }
@@ -57,7 +63,7 @@ export default function NewSalePage() {
     } else {
       setSelectedProduct(null);
     }
-  }, [productId, quantity, getProductById, setValue]);
+  }, [productId, getProductById, setValue]);
 
   const onSubmit = (values: z.infer<typeof newSaleSchema>) => {
     if (!selectedProduct) {
@@ -69,7 +75,7 @@ export default function NewSalePage() {
         return;
     }
 
-    const total = selectedProduct.sellPrice * values.quantity - values.discount;
+    const total = values.sellPrice * values.quantity - values.discount;
 
     const newSale = addSale({
         customer: {
@@ -79,6 +85,7 @@ export default function NewSalePage() {
         },
         product: selectedProduct,
         quantity: values.quantity,
+        unitPrice: values.sellPrice,
         discount: values.discount,
         total,
     });
@@ -91,7 +98,7 @@ export default function NewSalePage() {
   };
   
   const availableProducts = products.filter(p => p.status === 'active' && p.quantity > 0);
-  const subtotal = selectedProduct ? selectedProduct.sellPrice * quantity : 0;
+  const subtotal = sellPrice * quantity;
   const total = subtotal - discount;
 
   return (
@@ -142,12 +149,12 @@ export default function NewSalePage() {
               <CardHeader>
                 <CardTitle>Product Details</CardTitle>
               </CardHeader>
-              <CardContent className="grid md:grid-cols-3 gap-6">
+              <CardContent className="grid md:grid-cols-2 gap-6">
                  <FormField
                   control={form.control}
                   name="productId"
                   render={({ field }) => (
-                    <FormItem className="flex flex-col md:col-span-2">
+                    <FormItem className="flex flex-col">
                       <FormLabel>Product</FormLabel>
                        <Popover>
                         <PopoverTrigger asChild>
@@ -209,16 +216,28 @@ export default function NewSalePage() {
                     </FormItem>
                   )}
                 />
-                 <FormField
-                  control={form.control} name="quantity"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Quantity</FormLabel>
-                      <FormControl><Input type="number" min="1" max={selectedProduct?.quantity} {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                 <div className='grid grid-cols-2 gap-4'>
+                    <FormField
+                      control={form.control} name="quantity"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Quantity</FormLabel>
+                          <FormControl><Input type="number" min="1" max={selectedProduct?.quantity} {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control} name="sellPrice"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Sell Price (Tk.)</FormLabel>
+                          <FormControl><Input type="number" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                 </div>
               </CardContent>
             </Card>
           </div>
@@ -230,8 +249,8 @@ export default function NewSalePage() {
                 <CardDescription>Review the details before confirming.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex justify-between"><span>Price per item</span><span>Tk. {selectedProduct?.sellPrice.toLocaleString() || '0.00'}</span></div>
-                <div className="flex justify-between"><span>Subtotal</span><span>Tk. {subtotal.toLocaleString() || '0.00'}</span></div>
+                <div className="flex justify-between"><span>Price per item</span><span>Tk. {sellPrice.toLocaleString()}</span></div>
+                <div className="flex justify-between"><span>Subtotal</span><span>Tk. {subtotal.toLocaleString()}</span></div>
                 <FormField
                   control={form.control} name="discount"
                   render={({ field }) => (
