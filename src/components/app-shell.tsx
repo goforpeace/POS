@@ -36,6 +36,7 @@ import {
 } from './ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
+import Image from 'next/image';
 
 const AppShell = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
@@ -49,12 +50,9 @@ const AppShell = ({ children }: { children: React.ReactNode }) => {
       <Sidebar>
         <SidebarHeader className="p-4">
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-accent text-accent-foreground">
-              <Sparkles className="w-6 h-6" />
-            </div>
-            <h1 className="text-xl font-headline font-bold text-gray-800">
-              Freesia Finds
-            </h1>
+            <Link href="/" className="flex items-center gap-2">
+                <Image src="/logo.png" alt="Freesia Finds Logo" width={150} height={38} />
+            </Link>
           </div>
         </SidebarHeader>
         <SidebarContent>

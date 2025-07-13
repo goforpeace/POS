@@ -47,9 +47,9 @@ export default function AddProductPage() {
   const imageUrl = watch('image');
 
   React.useEffect(() => {
-    const cost = buyPrice || 0;
-    const shipping = shippingCost || 0;
-    const profitMargin = markup || 0;
+    const cost = Number(buyPrice) || 0;
+    const shipping = Number(shippingCost) || 0;
+    const profitMargin = Number(markup) || 0;
     const calculatedSellPrice = (cost + shipping) * (1 + profitMargin / 100);
     setValue('sellPrice', parseFloat(calculatedSellPrice.toFixed(2)));
   }, [buyPrice, shippingCost, markup, setValue]);
@@ -145,7 +145,7 @@ export default function AddProductPage() {
                                 <FormItem>
                                 <FormLabel>Buy Price (Tk.)</FormLabel>
                                 <FormControl>
-                                    <Input type="number" {...field} />
+                                    <Input type="number" step="any" {...field} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
@@ -158,7 +158,7 @@ export default function AddProductPage() {
                                 <FormItem>
                                 <FormLabel>Ship Cost (Tk.)</FormLabel>
                                 <FormControl>
-                                    <Input type="number" {...field} />
+                                    <Input type="number" step="any" {...field} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
@@ -172,7 +172,7 @@ export default function AddProductPage() {
                             <FormItem>
                                 <FormLabel>Markup (%)</FormLabel>
                                 <FormControl>
-                                <Input type="number" {...field} />
+                                <Input type="number" step="any" {...field} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>

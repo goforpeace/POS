@@ -1,20 +1,8 @@
 import React from 'react';
+import Image from 'next/image';
 
-const FreesiaLogo = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 100 25"
-    width="150"
-    height="37.5"
-    {...props}
-  >
-    <style>
-      {`
-        .font { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: bold; fill: #333; }
-      `}
-    </style>
-    <text x="0" y="20" className="font">Freesia Finds</text>
-  </svg>
+const FreesiaLogo = () => (
+    <Image src="/logo.png" alt="Freesia Finds Logo" width={150} height={38} />
 );
 
 export default FreesiaLogo;
