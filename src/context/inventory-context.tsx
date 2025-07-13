@@ -17,15 +17,20 @@ interface InventoryContextType {
 
 const InventoryContext = createContext<InventoryContextType | undefined>(undefined);
 
+const INVOICE_COUNTER_KEY = 'invoiceCounter';
+const INITIAL_INVOICE_NUMBER = 12320;
+
 export const InventoryProvider = ({ children }: { children: ReactNode }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
+  const [invoiceCounter, setInvoiceCounter] = useState<number>(INITIAL_INVOICE_NUMBER);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     try {
       const storedProducts = localStorage.getItem('products');
       const storedSales = localStorage.getItem('sales');
+      const storedInvoiceCounter = localStorage.getItem(INVOICE_COUNTER_KEY);
 
       if (storedProducts) {
         setProducts(JSON.parse(storedProducts));
@@ -38,10 +43,31 @@ export const InventoryProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setSales(mockSales);
       }
+
+      if (storedInvoiceCounter) {
+        const counter = parseInt(storedInvoiceCounter, 10);
+        if (!isNaN(counter)) {
+          setInvoiceCounter(counter);
+        } else {
+          setInvoiceCounter(INITIAL_INVOICE_NUMBER);
+        }
+      } else {
+        // If no counter, determine from existing sales or start fresh
+        const maxId = mockSales.reduce((max, sale) => {
+            if (sale.id.startsWith('Inv-')) {
+                const num = parseInt(sale.id.split('-')[1], 10);
+                return num > max ? num : max;
+            }
+            return max;
+        }, 0);
+        setInvoiceCounter(maxId > 0 ? maxId : INITIAL_INVOICE_NUMBER);
+      }
+
     } catch (error) {
         console.error("Failed to parse from localStorage", error);
         setProducts(mockProducts);
         setSales(mockSales);
+        setInvoiceCounter(INITIAL_INVOICE_NUMBER);
     }
     setIsLoaded(true);
   }, []);
@@ -55,8 +81,9 @@ export const InventoryProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (isLoaded) {
         localStorage.setItem('sales', JSON.stringify(sales));
+        localStorage.setItem(INVOICE_COUNTER_KEY, invoiceCounter.toString());
     }
-  }, [sales, isLoaded]);
+  }, [sales, invoiceCounter, isLoaded]);
 
   const addProduct = (productData: Omit<Product, 'id' | 'status'>) => {
     const newProduct: Product = {
@@ -68,13 +95,15 @@ export const InventoryProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addSale = (saleData: Omit<Sale, 'id' | 'date'>): Sale => {
+    const nextCounter = invoiceCounter + 1;
     const newSale: Sale = {
       ...saleData,
-      id: `sale${Date.now()}`,
+      id: `Inv-${nextCounter}`,
       date: new Date(),
     };
     
     setSales(prev => [newSale, ...prev]);
+    setInvoiceCounter(nextCounter);
 
     setProducts(prev => prev.map(p => 
         p.id === newSale.product.id 

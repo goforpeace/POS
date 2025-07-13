@@ -45,7 +45,7 @@ export const mockProducts: Product[] = [
 
 export const mockSales: Sale[] = [
   {
-    id: 'sale1',
+    id: 'Inv-12318',
     customer: { name: 'Aisha Ahmed', phone: '01700000001', address: '123 Gulshan, Dhaka' },
     product: mockProducts[0],
     quantity: 1,
@@ -54,7 +54,7 @@ export const mockSales: Sale[] = [
     date: new Date(new Date().setDate(new Date().getDate() - 1)),
   },
   {
-    id: 'sale2',
+    id: 'Inv-12319',
     customer: { name: 'Fatima Khan', phone: '01800000002', address: '456 Banani, Dhaka' },
     product: mockProducts[1],
     quantity: 2,
@@ -63,7 +63,7 @@ export const mockSales: Sale[] = [
     date: new Date(new Date().setDate(new Date().getDate() - 3)),
   },
   {
-    id: 'sale3',
+    id: 'Inv-12320',
     customer: { name: 'Jannat Ferdous', phone: '01900000003', address: '789 Dhanmondi, Dhaka' },
     product: mockProducts[2],
     quantity: 1,
