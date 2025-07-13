@@ -6,7 +6,14 @@ import * as z from 'zod';
 import { useInventory } from '@/context/inventory-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -26,6 +33,7 @@ export default function AddProductPage() {
   const { addProduct } = useInventory();
   const { toast } = useToast();
   const router = useRouter();
+  const [mounted, setMounted] = React.useState(false);
 
   const form = useForm<z.infer<typeof addProductSchema>>({
     resolver: zodResolver(addProductSchema),
@@ -54,6 +62,11 @@ export default function AddProductPage() {
     setValue('sellPrice', parseFloat(calculatedSellPrice.toFixed(2)));
   }, [buyPrice, shippingCost, markup, setValue]);
 
+  // ✅ ensure rendering happens only on client
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const onSubmit = (values: z.infer<typeof addProductSchema>) => {
     addProduct({
       title: values.title,
@@ -64,8 +77,8 @@ export default function AddProductPage() {
       image: values.image,
     });
     toast({
-        title: "Product Added",
-        description: `${values.title} has been added to your inventory.`,
+      title: 'Product Added',
+      description: `${values.title} has been added to your inventory.`,
     });
     router.push('/products');
   };
@@ -108,91 +121,102 @@ export default function AddProductPage() {
                   )}
                 />
                 <div className="grid grid-cols-2 gap-6">
-                    <FormField
+                  <FormField
                     control={form.control}
                     name="quantity"
                     render={({ field }) => (
-                        <FormItem>
+                      <FormItem>
                         <FormLabel>Quantity</FormLabel>
                         <FormControl>
-                            <Input type="number" {...field} />
+                          <Input type="number" {...field} />
                         </FormControl>
                         <FormMessage />
-                        </FormItem>
+                      </FormItem>
                     )}
-                    />
+                  />
                 </div>
               </CardContent>
             </Card>
 
             <div className="space-y-8">
-                <Card>
-                    <CardHeader><CardTitle>Image Preview</CardTitle></CardHeader>
-                    <CardContent>
-                        {imageUrl && <Image src={imageUrl} alt="preview" width={400} height={400} className="rounded-lg" data-ai-hint="product photo"/>}
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Pricing</CardTitle>
-                    </CardHeader>
-                    <CardContent className="grid gap-6">
-                        <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                            control={form.control}
-                            name="buyPrice"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Buy Price (Tk.)</FormLabel>
-                                <FormControl>
-                                    <Input type="number" step="any" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                            />
-                            <FormField
-                            control={form.control}
-                            name="shippingCost"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Ship Cost (Tk.)</FormLabel>
-                                <FormControl>
-                                    <Input type="number" step="any" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                            />
-                        </div>
-                        <FormField
-                            control={form.control}
-                            name="markup"
-                            render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Markup (%)</FormLabel>
-                                <FormControl>
-                                <Input type="number" step="any" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                        />
-                         <FormField
-                            control={form.control}
-                            name="sellPrice"
-                            render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Sell Price (Auto-generated)</FormLabel>
-                                <FormControl>
-                                <Input type="number" readOnly className="bg-muted" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                        />
-                    </CardContent>
-                </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Image Preview</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {mounted && imageUrl && (
+                    <Image
+                      src={imageUrl}
+                      alt="preview"
+                      width={400}
+                      height={400}
+                      className="rounded-lg"
+                      data-ai-hint="product photo"
+                    />
+                  )}
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Pricing</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="buyPrice"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Buy Price (Tk.)</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="any" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="shippingCost"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Ship Cost (Tk.)</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="any" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="markup"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Markup (%)</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="any" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="sellPrice"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Sell Price (Auto-generated)</FormLabel>
+                        <FormControl>
+                          <Input type="number" readOnly className="bg-muted" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
             </div>
           </div>
           <div className="flex justify-end">
