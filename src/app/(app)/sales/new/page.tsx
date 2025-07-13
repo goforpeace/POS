@@ -1,5 +1,6 @@
 'use client';
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -8,10 +9,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Product } from '@/lib/types';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
+import { Check, ChevronsUpDown } from 'lucide-react';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 
 const newSaleSchema = z.object({
   customerName: z.string().min(2, 'Name is required'),
@@ -139,17 +143,68 @@ export default function NewSalePage() {
                 <CardTitle>Product Details</CardTitle>
               </CardHeader>
               <CardContent className="grid md:grid-cols-3 gap-6">
-                <FormField
-                  control={form.control} name="productId"
+                 <FormField
+                  control={form.control}
+                  name="productId"
                   render={({ field }) => (
-                    <FormItem className="md:col-span-2">
+                    <FormItem className="flex flex-col md:col-span-2">
                       <FormLabel>Product</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger><SelectValue placeholder="Select a product" /></SelectTrigger></FormControl>
-                        <SelectContent>
-                          {availableProducts.map(p => <SelectItem key={p.id} value={p.id}>{p.title} (Stock: {p.quantity})</SelectItem>)}
-                        </SelectContent>
-                      </Select>
+                       <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              className={cn(
+                                "w-full justify-between",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value
+                                ? availableProducts.find(
+                                    (p) => p.id === field.value
+                                  )?.title
+                                : "Select a product"}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0">
+                          <Command>
+                            <CommandInput placeholder="Search product..." />
+                            <CommandList>
+                                <CommandEmpty>No product found.</CommandEmpty>
+                                <CommandGroup>
+                                {availableProducts.map((p) => (
+                                    <CommandItem
+                                    value={p.id}
+                                    key={p.id}
+                                    onSelect={() => {
+                                        form.setValue("productId", p.id)
+                                    }}
+                                    >
+                                    <div className='flex items-center gap-4 w-full'>
+                                        <Image src={p.image} alt={p.title} width={40} height={40} className='rounded-md' />
+                                        <div className='flex-1'>
+                                            <div className='font-medium'>{p.title}</div>
+                                            <div className='text-xs text-muted-foreground'>Stock: {p.quantity}</div>
+                                        </div>
+                                        <Check
+                                            className={cn(
+                                            "mr-2 h-4 w-4",
+                                            p.id === field.value
+                                                ? "opacity-100"
+                                                : "opacity-0"
+                                            )}
+                                        />
+                                    </div>
+                                    </CommandItem>
+                                ))}
+                                </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                       <FormMessage />
                     </FormItem>
                   )}
