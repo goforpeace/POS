@@ -33,6 +33,7 @@ export default function NewSalePage() {
   const { toast } = useToast();
   const router = useRouter();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [popoverOpen, setPopoverOpen] = useState(false);
 
   const form = useForm<z.infer<typeof newSaleSchema>>({
     resolver: zodResolver(newSaleSchema),
@@ -63,7 +64,7 @@ export default function NewSalePage() {
     } else {
       setSelectedProduct(null);
     }
-  }, [productId, getProductById, setValue]);
+  }, [productId, getProductById, setValue, quantity]);
 
   const onSubmit = (values: z.infer<typeof newSaleSchema>) => {
     if (!selectedProduct) {
@@ -156,12 +157,13 @@ export default function NewSalePage() {
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Product</FormLabel>
-                       <Popover>
+                       <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                         <PopoverTrigger asChild>
                           <FormControl>
                             <Button
                               variant="outline"
                               role="combobox"
+                              aria-expanded={popoverOpen}
                               className={cn(
                                 "w-full justify-between",
                                 !field.value && "text-muted-foreground"
@@ -184,14 +186,15 @@ export default function NewSalePage() {
                                 <CommandGroup>
                                 {availableProducts.map((p) => (
                                     <CommandItem
-                                    value={p.id}
-                                    key={p.id}
-                                    onSelect={() => {
-                                        form.setValue("productId", p.id)
-                                    }}
+                                      key={p.id}
+                                      value={p.id}
+                                      onSelect={(currentValue) => {
+                                        setValue("productId", currentValue === field.value ? "" : currentValue)
+                                        setPopoverOpen(false)
+                                      }}
                                     >
                                     <div className='flex items-center gap-4 w-full'>
-                                        <Image src={p.image} alt={p.title} width={40} height={40} className='rounded-md' />
+                                        <Image src={p.image} alt={p.title} width={40} height={40} className='rounded-md' data-ai-hint="product photo"/>
                                         <div className='flex-1'>
                                             <div className='font-medium'>{p.title}</div>
                                             <div className='text-xs text-muted-foreground'>Stock: {p.quantity}</div>
