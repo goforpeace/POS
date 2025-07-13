@@ -1,6 +1,14 @@
+
+'use client';
 import AppShell from '@/components/app-shell';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  return <AppShell>{children}</AppShell>;
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  return <AppShell>{isClient ? children : null}</AppShell>;
 }
