@@ -2,13 +2,13 @@
 'use client';
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { useInventory } from '@/context/inventory-context';
+import { useInventory, Product } from '@/context/inventory-context';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PackageX, Trash } from 'lucide-react';
+import { MoreHorizontal, PackageX, Trash, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -19,13 +19,21 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog"
 
 export default function ProductsPage() {
   const { products, updateProductStatus, deleteProduct } = useInventory();
   const [filter, setFilter] = useState('');
   const { toast } = useToast();
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [productToView, setProductToView] = useState<Product | null>(null);
 
   const activeProducts = products.filter(p => p.status === 'active');
 
@@ -41,12 +49,15 @@ export default function ProductsPage() {
     });
   };
 
-  const handleDelete = (productId: string) => {
-    deleteProduct(productId);
-    toast({
-        title: "Product Deleted",
-        description: "The product has been permanently removed.",
-    });
+  const confirmDelete = () => {
+    if (productToDelete) {
+      deleteProduct(productToDelete.id);
+      toast({
+          title: "Product Deleted",
+          description: "The product has been permanently removed.",
+      });
+      setProductToDelete(null);
+    }
   };
 
   return (
@@ -96,7 +107,6 @@ export default function ProductsPage() {
                   <TableCell className="text-right">Tk. {product.shippingCost.toLocaleString()}</TableCell>
                   <TableCell className="text-right">Tk. {product.sellPrice.toLocaleString()}</TableCell>
                   <TableCell>
-                    <AlertDialog>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" className="h-8 w-8 p-0">
@@ -105,32 +115,21 @@ export default function ProductsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                           <DropdownMenuItem onClick={() => setProductToView(product)}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            <span>View</span>
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleReject(product.id)}>
                             <PackageX className="mr-2 h-4 w-4" />
                             <span>Reject</span>
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <AlertDialogTrigger asChild>
-                            <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>
+                            <DropdownMenuItem className="text-destructive" onClick={() => setProductToDelete(product)}>
                               <Trash className="mr-2 h-4 w-4" />
                               <span>Delete</span>
                             </DropdownMenuItem>
-                          </AlertDialogTrigger>
                         </DropdownMenuContent>
                       </DropdownMenu>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the product from your inventory.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction className='bg-destructive hover:bg-destructive/90' onClick={() => handleDelete(product.id)}>Delete</AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
                   </TableCell>
                 </TableRow>
               ))}
@@ -143,6 +142,44 @@ export default function ProductsPage() {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!productToDelete} onOpenChange={(open) => !open && setProductToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the product from your inventory.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setProductToDelete(null)}>Cancel</AlertDialogCancel>
+              <AlertDialogAction className='bg-destructive hover:bg-destructive/90' onClick={confirmDelete}>Delete</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={!!productToView} onOpenChange={(open) => !open && setProductToView(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{productToView?.title}</DialogTitle>
+             <DialogDescription>
+                Quantity in stock: {productToView?.quantity}
+              </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center items-center p-4">
+             {productToView?.image && (
+                <Image
+                  src={productToView.image}
+                  alt={productToView.title}
+                  width={300}
+                  height={300}
+                  className="rounded-lg object-cover"
+                />
+              )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }

@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Product, Sale } from '@/lib/types';
+import type { Product, Sale } from '@/lib/types';
 import { mockProducts, mockSales } from '@/lib/mock-data';
 
 interface InventoryContextType {
@@ -90,7 +90,7 @@ export const InventoryProvider = ({ children }: { children: ReactNode }) => {
   const addProduct = (productData: Omit<Product, 'id' | 'status'>) => {
     const newProduct: Product = {
       ...productData,
-      id: `prod${Date.now()}`,
+      id: `prod-${Date.now()}`,
       status: 'active',
     };
     setProducts(prev => [...prev, newProduct]);
@@ -164,3 +164,6 @@ export const useInventory = () => {
   }
   return context;
 };
+
+// Also exporting types to be used in components
+export type { Product, Sale };

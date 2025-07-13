@@ -2,7 +2,7 @@
 'use client';
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { useInventory } from '@/context/inventory-context';
+import { useInventory, Product } from '@/context/inventory-context';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -19,13 +19,13 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
 export default function RejectedProductsPage() {
   const { products, updateProductStatus, deleteProduct } = useInventory();
   const [filter, setFilter] = useState('');
   const { toast } = useToast();
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
 
   const rejectedProducts = products.filter(p => p.status === 'rejected');
 
@@ -41,12 +41,15 @@ export default function RejectedProductsPage() {
     });
   };
 
-  const handleDelete = (productId: string) => {
-    deleteProduct(productId);
-    toast({
-        title: "Product Deleted",
-        description: "The product has been permanently removed.",
-    });
+  const confirmDelete = () => {
+    if (productToDelete) {
+        deleteProduct(productToDelete.id);
+        toast({
+            title: "Product Deleted",
+            description: "The product has been permanently removed.",
+        });
+        setProductToDelete(null);
+    }
   };
 
   return (
@@ -92,7 +95,6 @@ export default function RejectedProductsPage() {
                   <TableCell className="text-right">{product.quantity}</TableCell>
                   <TableCell className="text-right">Tk. {product.buyPrice.toLocaleString()}</TableCell>
                   <TableCell>
-                    <AlertDialog>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" className="h-8 w-8 p-0">
@@ -106,27 +108,12 @@ export default function RejectedProductsPage() {
                             <span>Restore to Stock</span>
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                           <AlertDialogTrigger asChild>
-                            <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>
+                            <DropdownMenuItem className="text-destructive" onClick={() => setProductToDelete(product)}>
                               <Trash className="mr-2 h-4 w-4" />
                               <span>Delete</span>
                             </DropdownMenuItem>
-                          </AlertDialogTrigger>
                         </DropdownMenuContent>
                       </DropdownMenu>
-                       <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                           This action cannot be undone. This will permanently delete the product from your inventory.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction className='bg-destructive hover:bg-destructive/90' onClick={() => handleDelete(product.id)}>Delete</AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
                   </TableCell>
                 </TableRow>
               ))}
@@ -139,6 +126,21 @@ export default function RejectedProductsPage() {
           )}
         </CardContent>
       </Card>
+      
+      <AlertDialog open={!!productToDelete} onOpenChange={(open) => !open && setProductToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the product from your inventory.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setProductToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction className='bg-destructive hover:bg-destructive/90' onClick={confirmDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
