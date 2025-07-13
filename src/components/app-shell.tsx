@@ -25,6 +25,7 @@ import {
   Sparkles,
   Settings,
   ChevronDown,
+  ClipboardList,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import {
@@ -122,6 +123,14 @@ const AppShell = ({ children }: { children: React.ReactNode }) => {
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                     <SidebarMenu className="ml-4 my-1">
+                        <SidebarMenuItem>
+                            <Link href="/sales" legacyBehavior passHref>
+                                <SidebarMenuButton size="sm" isActive={isActive('/sales', true)}>
+                                    <ClipboardList />
+                                    <span>Sales List</span>
+                                </SidebarMenuButton>
+                            </Link>
+                        </SidebarMenuItem>
                         <SidebarMenuItem>
                             <Link href="/sales/new" legacyBehavior passHref>
                                 <SidebarMenuButton size="sm" isActive={isActive('/sales/new')}>

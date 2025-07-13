@@ -34,7 +34,7 @@ export default function AddProductPage() {
       quantity: 0,
       buyPrice: 0,
       shippingCost: 0,
-      markup: 50,
+      markup: 10,
       sellPrice: 0,
       image: 'https://placehold.co/400x400.png',
     },
@@ -47,8 +47,10 @@ export default function AddProductPage() {
   const imageUrl = watch('image');
 
   React.useEffect(() => {
-    const totalCost = (buyPrice || 0) + (shippingCost || 0);
-    const calculatedSellPrice = totalCost * (1 + (markup || 0) / 100);
+    const cost = buyPrice || 0;
+    const shipping = shippingCost || 0;
+    const profitMargin = markup || 0;
+    const calculatedSellPrice = (cost + shipping) * (1 + profitMargin / 100);
     setValue('sellPrice', parseFloat(calculatedSellPrice.toFixed(2)));
   }, [buyPrice, shippingCost, markup, setValue]);
 

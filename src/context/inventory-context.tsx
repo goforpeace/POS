@@ -9,6 +9,7 @@ interface InventoryContextType {
   sales: Sale[];
   addProduct: (product: Omit<Product, 'id' | 'status'>) => void;
   addSale: (sale: Omit<Sale, 'id' | 'date'>) => Sale;
+  deleteSale: (saleId: string) => void;
   updateProductStatus: (productId: string, status: 'active' | 'rejected') => void;
   getProductById: (productId: string) => Product | undefined;
   getSaleById: (saleId: string) => Sale | undefined;
@@ -83,6 +84,22 @@ export const InventoryProvider = ({ children }: { children: ReactNode }) => {
     return newSale;
   };
 
+  const deleteSale = (saleId: string) => {
+    const saleToDelete = sales.find(s => s.id === saleId);
+    if (!saleToDelete) return;
+
+    // Add product quantity back to stock
+    setProducts(prev => prev.map(p =>
+      p.id === saleToDelete.product.id
+        ? { ...p, quantity: p.quantity + saleToDelete.quantity }
+        : p
+    ));
+
+    // Remove sale from sales list
+    setSales(prev => prev.filter(s => s.id !== saleId));
+  };
+
+
   const updateProductStatus = (productId: string, status: 'active' | 'rejected') => {
     setProducts(prev => prev.map(p => 
         p.id === productId ? {...p, status} : p
@@ -99,7 +116,7 @@ export const InventoryProvider = ({ children }: { children: ReactNode }) => {
 
 
   return (
-    <InventoryContext.Provider value={{ products, sales, addProduct, addSale, updateProductStatus, getProductById, getSaleById }}>
+    <InventoryContext.Provider value={{ products, sales, addProduct, addSale, deleteSale, updateProductStatus, getProductById, getSaleById }}>
       {children}
     </InventoryContext.Provider>
   );
