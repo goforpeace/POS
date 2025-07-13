@@ -13,7 +13,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <InventoryProvider>
-      <AppShell>{isClient ? children : null}</AppShell>
+      {isClient ? <AppShell>{children}</AppShell> : null}
     </InventoryProvider>
   );
 }
