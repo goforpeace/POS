@@ -42,10 +42,14 @@ export default function InvoicePage() {
     <>
       <div className="flex justify-between items-center mb-6 print-hidden">
         <h1 className="text-3xl font-headline">Invoice Details</h1>
-        <Button onClick={handlePrint}>
-          <Printer className="mr-2 h-4 w-4" />
-          Print / Download
-        </Button>
+<button
+  onClick={handlePrint}
+  className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90"
+>
+  <Printer className="h-4 w-4" />
+  Print / Download
+</button>
+
       </div>
       <div ref={invoiceRef} className="print-area">
         <style type="text/css" media="print">
