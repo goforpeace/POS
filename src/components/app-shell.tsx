@@ -58,7 +58,7 @@ const AppShell = ({ children }: { children: React.ReactNode }) => {
         <SidebarContent>
           <SidebarMenu>
             <SidebarMenuItem>
-              <Link href="/" legacyBehavior passHref>
+              <Link href="/">
                 <SidebarMenuButton
                   isActive={isActive('/', true)}
                   tooltip="Dashboard"
@@ -82,7 +82,7 @@ const AppShell = ({ children }: { children: React.ReactNode }) => {
               <CollapsibleContent>
                 <SidebarMenu className="ml-4 my-1">
                   <SidebarMenuItem>
-                    <Link href="/products" legacyBehavior passHref>
+                    <Link href="/products">
                       <SidebarMenuButton size="sm" isActive={isActive('/products', true)}>
                         <Package />
                         <span>Stock List</span>
@@ -90,7 +90,7 @@ const AppShell = ({ children }: { children: React.ReactNode }) => {
                     </Link>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
-                    <Link href="/products/add" legacyBehavior passHref>
+                    <Link href="/products/add">
                       <SidebarMenuButton size="sm" isActive={isActive('/products/add')}>
                         <PlusCircle />
                         <span>Add Product</span>
@@ -98,7 +98,7 @@ const AppShell = ({ children }: { children: React.ReactNode }) => {
                     </Link>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
-                    <Link href="/products/rejected" legacyBehavior passHref>
+                    <Link href="/products/rejected">
                       <SidebarMenuButton size="sm" isActive={isActive('/products/rejected')}>
                         <PackageX />
                         <span>Rejected List</span>
@@ -122,7 +122,7 @@ const AppShell = ({ children }: { children: React.ReactNode }) => {
                 <CollapsibleContent>
                     <SidebarMenu className="ml-4 my-1">
                         <SidebarMenuItem>
-                            <Link href="/sales" legacyBehavior passHref>
+                            <Link href="/sales">
                                 <SidebarMenuButton size="sm" isActive={isActive('/sales', true)}>
                                     <ClipboardList />
                                     <span>Sales List</span>
@@ -130,7 +130,7 @@ const AppShell = ({ children }: { children: React.ReactNode }) => {
                             </Link>
                         </SidebarMenuItem>
                         <SidebarMenuItem>
-                            <Link href="/sales/new" legacyBehavior passHref>
+                            <Link href="/sales/new">
                                 <SidebarMenuButton size="sm" isActive={isActive('/sales/new')}>
                                     <DollarSign />
                                     <span>New Sale</span>
@@ -142,7 +142,7 @@ const AppShell = ({ children }: { children: React.ReactNode }) => {
             </Collapsible>
 
             <SidebarMenuItem>
-              <Link href="/price-advisor" legacyBehavior passHref>
+              <Link href="/price-advisor">
                 <SidebarMenuButton isActive={isActive('/price-advisor')}>
                   <Sparkles />
                   <span>Price Advisor</span>
