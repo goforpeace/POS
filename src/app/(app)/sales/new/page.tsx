@@ -64,12 +64,9 @@ const ProductSelector = ({ onProductSelected }: { onProductSelected: (product: P
                             {availableProducts.map((p) => (
                                 <CommandItem
                                     key={p.id}
-                                    value={p.id}
-                                    onSelect={(currentValue) => {
-                                        const selected = availableProducts.find(prod => prod.id === currentValue);
-                                        if (selected) {
-                                            onProductSelected(selected);
-                                        }
+                                    value={p.title}
+                                    onSelect={() => {
+                                        onProductSelected(p);
                                         setPopoverOpen(false);
                                     }}
                                 >
@@ -266,5 +263,3 @@ export default function NewSalePage() {
     </div>
   );
 }
-
-    
