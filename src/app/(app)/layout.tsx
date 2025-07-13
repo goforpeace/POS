@@ -1,4 +1,3 @@
-import 'react-to-print/build/dist/index.css';
 import AppShell from '@/components/app-shell';
 import React from 'react';
 
