@@ -224,9 +224,9 @@ export default function AddProductPage() {
                     name="sellPrice"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Sell Price (Auto-generated)</FormLabel>
+                        <FormLabel>Sell Price (Tk.)</FormLabel>
                         <FormControl>
-                          <Input type="number" readOnly className="bg-muted" {...field} />
+                          <Input type="number" step="any" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
