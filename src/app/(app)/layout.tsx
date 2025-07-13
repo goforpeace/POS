@@ -1,6 +1,5 @@
 'use client';
 import AppShell from '@/components/app-shell';
-import { InventoryProvider } from '@/context/inventory-context';
 import React, { useState, useEffect } from 'react';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -10,9 +9,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     setIsClient(true);
   }, []);
 
-  return (
-    <InventoryProvider>
-      {isClient ? <AppShell>{children}</AppShell> : null}
-    </InventoryProvider>
-  );
+  if (!isClient) {
+    return null;
+  }
+
+  return <AppShell>{children}</AppShell>;
 }
