@@ -22,14 +22,47 @@ export default function InvoicePage() {
     }
   }, [params.id, getSaleById]);
 
-  const handlePrint = React.useCallback(
-    useReactToPrint({
-      content: () => invoiceRef.current,
-      documentTitle: `Invoice-${sale?.id || 'details'}`,
-      onAfterPrint: () => console.log('Printed successfully!'),
-    }),
-    [sale]
-  );
+  const handlePrint = () => {
+    if (invoiceRef.current) {
+      const printContent = invoiceRef.current.innerHTML;
+      const win = window.open('', '', 'width=900,height=650');
+      if (win) {
+        win.document.write(`
+          <html>
+            <head>
+              <title>Invoice-${sale?.id || 'details'}</title>
+              <style>
+                body {
+                  font-family: sans-serif;
+                  padding: 20px;
+                }
+                table {
+                  border-collapse: collapse;
+                  width: 100%;
+                }
+                table, th, td {
+                  border: 1px solid #ccc;
+                }
+                th, td {
+                  padding: 8px;
+                  text-align: left;
+                }
+                .print-area {
+                  margin: 0;
+                }
+              </style>
+            </head>
+            <body>${printContent}</body>
+          </html>
+        `);
+        win.document.close();
+        win.focus();
+        win.print();
+        win.close();
+      }
+    }
+  };
+  
 
   if (!sale) {
     return (
@@ -43,13 +76,10 @@ export default function InvoicePage() {
     <>
       <div className="flex justify-between items-center mb-6 print-hidden">
         <h1 className="text-3xl font-headline">Invoice Details</h1>
-        <button
-          onClick={handlePrint}
-          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90"
-        >
-          <Printer className="h-4 w-4" />
-          Print / Download
-        </button>
+        <button onClick={handlePrint}>
+  Print / Download
+</button>
+
       </div>
       <div ref={invoiceRef} className="print-area">
         <style type="text/css" media="print">
