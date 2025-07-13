@@ -187,9 +187,9 @@ export default function NewSalePage() {
                                 {availableProducts.map((p) => (
                                     <CommandItem
                                       key={p.id}
-                                      value={p.id}
-                                      onSelect={(currentValue) => {
-                                        setValue("productId", currentValue === field.value ? "" : currentValue)
+                                      value={p.title}
+                                      onSelect={() => {
+                                        setValue("productId", p.id)
                                         setPopoverOpen(false)
                                       }}
                                     >
