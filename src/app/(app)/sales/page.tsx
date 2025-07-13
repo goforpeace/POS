@@ -1,12 +1,13 @@
+
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useInventory } from '@/context/inventory-context';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Trash, Eye, Download } from 'lucide-react';
+import { MoreHorizontal, Trash, Eye, Download, Calendar as CalendarIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import {
@@ -22,18 +23,57 @@ import {
 } from "@/components/ui/alert-dialog"
 import Papa from 'papaparse';
 import { format } from 'date-fns';
+import { DateRange } from 'react-day-picker';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 
 export default function SalesListPage() {
   const { sales, deleteSale } = useInventory();
   const [filter, setFilter] = useState('');
   const { toast } = useToast();
   const router = useRouter();
+  const [timeFilter, setTimeFilter] = useState('all');
+  const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>();
 
-  const filteredSales = sales.filter(s =>
-    s.product.title.toLowerCase().includes(filter.toLowerCase()) ||
-    s.customer.name.toLowerCase().includes(filter.toLowerCase()) ||
-    s.id.toLowerCase().includes(filter.toLowerCase())
-  ).sort((a,b) => b.date.getTime() - a.date.getTime());
+  const filteredSales = useMemo(() => {
+    let tempSales = sales.filter(s =>
+      s.product.title.toLowerCase().includes(filter.toLowerCase()) ||
+      s.customer.name.toLowerCase().includes(filter.toLowerCase()) ||
+      s.id.toLowerCase().includes(filter.toLowerCase())
+    );
+
+    const now = new Date();
+    switch (timeFilter) {
+      case 'all':
+        // No date filter
+        break;
+      case '7days':
+        const sevenDaysAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
+        tempSales = tempSales.filter(s => new Date(s.date) >= sevenDaysAgo);
+        break;
+      case '30days':
+        const thirtyDaysAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30);
+        tempSales = tempSales.filter(s => new Date(s.date) >= thirtyDaysAgo);
+        break;
+      case 'custom':
+        if (customDateRange?.from && customDateRange?.to) {
+          const from = new Date(customDateRange.from.setHours(0,0,0,0));
+          const to = new Date(customDateRange.to.setHours(23,59,59,999));
+          tempSales = tempSales.filter(s => {
+            const saleDate = new Date(s.date);
+            return saleDate >= from && saleDate <= to;
+          });
+        } else {
+            return [];
+        }
+        break;
+      default:
+        break;
+    }
+
+    return tempSales.sort((a,b) => b.date.getTime() - a.date.getTime());
+
+  }, [sales, filter, timeFilter, customDateRange]);
   
   const handleDelete = (saleId: string) => {
     deleteSale(saleId);
@@ -82,16 +122,58 @@ export default function SalesListPage() {
       <h1 className="text-3xl font-headline">Sales List</h1>
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center gap-4 flex-wrap">
             <CardTitle>All Sales</CardTitle>
-            <div className='flex gap-2 items-center'>
+            <div className='flex gap-2 items-center flex-wrap'>
               <Input
-                placeholder="Filter by product, customer, invoice ID..."
+                placeholder="Filter by product, customer, ID..."
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
-                className="max-w-sm"
+                className="max-w-xs"
               />
-              <Button onClick={handleDownloadCSV} variant='outline'>
+              <div className="flex items-center gap-2">
+                <Button variant={timeFilter === 'all' ? 'default' : 'outline'} size="sm" onClick={() => setTimeFilter('all')}>All Time</Button>
+                <Button variant={timeFilter === '7days' ? 'default' : 'outline'} size="sm" onClick={() => setTimeFilter('7days')}>Last 7 Days</Button>
+                <Button variant={timeFilter === '30days' ? 'default' : 'outline'} size="sm" onClick={() => setTimeFilter('30days')}>Last 30 Days</Button>
+
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      id="date"
+                      variant={timeFilter === 'custom' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setTimeFilter('custom')}
+                      className="w-[240px] justify-start text-left font-normal"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {customDateRange?.from ? (
+                        customDateRange.to ? (
+                          <>
+                            {format(customDateRange.from, "LLL dd, y")} -{" "}
+                            {format(customDateRange.to, "LLL dd, y")}
+                          </>
+                        ) : (
+                          format(customDateRange.from, "LLL dd, y")
+                        )
+                      ) : (
+                        <span>Custom Range</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      initialFocus
+                      mode="range"
+                      defaultMonth={customDateRange?.from}
+                      selected={customDateRange}
+                      onSelect={setCustomDateRange}
+                      numberOfMonths={2}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <Button onClick={handleDownloadCSV} variant='outline' disabled={filteredSales.length === 0}>
                 <Download className='mr-2 h-4 w-4' />
                 Download CSV
               </Button>
@@ -162,7 +244,7 @@ export default function SalesListPage() {
           </Table>
           {filteredSales.length === 0 && (
             <div className="text-center py-10 text-muted-foreground">
-              No sales found.
+              No sales found for the selected period.
             </div>
           )}
         </CardContent>
