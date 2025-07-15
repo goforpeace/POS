@@ -174,7 +174,7 @@ export default function DashboardPage() {
           <p className="mt-2 text-lg">Your Point of Sale & Inventory Dashboard</p>
         </div>
       <Card className="relative w-full h-64 overflow-hidden">
-        <Image src="https://placehold.co/1200x300.png" alt="Freesia Finds Banner" layout="fill" objectFit="cover" data-ai-hint="fashion boutique" />
+        <Image src="/7492437.png" alt="Freesia Finds Banner" layout="fill" objectFit="cover" data-ai-hint="fashion boutique" />
         <div className="absolute top-4 right-4 flex gap-2">
           <Button variant="secondary" size="icon" asChild>
             <Link href="https://facebook.com/freesia.finds" target="_blank">

@@ -60,9 +60,9 @@ export const InventoryProvider = ({ children }: { children: ReactNode }) => {
       } else {
         // If no counter, determine from existing sales or start fresh
         const maxId = mockSales.reduce((max, sale) => {
-            if (sale.id.startsWith('Inv-')) {
-                const num = parseInt(sale.id.split('-')[1], 10);
-                return num > max ? num : max;
+            const numericId = parseInt(sale.id.replace('Inv-', ''), 10);
+            if (!isNaN(numericId) && numericId > max) {
+                return numericId;
             }
             return max;
         }, 0);
@@ -109,7 +109,7 @@ export const InventoryProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addSale = (saleData: AddSaleData): Sale => {
-    const nextCounter = invoiceCounter + 1;
+    const nextCounter = invoiceCounter;
     
     const newSale: Sale = {
         ...saleData,
@@ -118,7 +118,7 @@ export const InventoryProvider = ({ children }: { children: ReactNode }) => {
     };
     
     setSales(prev => [newSale, ...prev]);
-    setInvoiceCounter(nextCounter);
+    setInvoiceCounter(nextCounter + 1);
 
     // Decrease stock for each item in the sale
     newSale.items.forEach(item => {

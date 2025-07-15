@@ -88,22 +88,47 @@ export default function SalesListPage() {
   };
 
   const handleDownloadCSV = () => {
-    const dataToExport = filteredSales.flatMap(sale => 
-        sale.items.map(item => ({
+    const dataToExport = filteredSales.flatMap(sale => {
+      if (!sale.items || sale.items.length === 0) {
+        return [{
             "Invoice ID": sale.id,
-            "Date": format(sale.date, 'yyyy-MM-dd'),
+            "Date": format(new Date(sale.date), 'yyyy-MM-dd'),
             "Customer Name": sale.customer.name,
             "Customer Phone": sale.customer.phone,
             "Customer Address": sale.customer.address,
-            "Product Title": item.product.title,
-            "Quantity": item.quantity,
-            "Unit Price": item.unitPrice,
-            "Item Total": item.quantity * item.unitPrice,
+            "Product Title": "N/A",
+            "Quantity": 0,
+            "Unit Price": 0,
+            "Item Total": 0,
             "Invoice Discount": sale.discount,
             "Invoice Delivery Charge": sale.deliveryCharge,
             "Invoice Total": sale.total,
-        }))
-    );
+        }];
+      }
+      return sale.items.map(item => ({
+          "Invoice ID": sale.id,
+          "Date": format(new Date(sale.date), 'yyyy-MM-dd'),
+          "Customer Name": sale.customer.name,
+          "Customer Phone": sale.customer.phone,
+          "Customer Address": sale.customer.address,
+          "Product Title": item.title,
+          "Quantity": item.quantity,
+          "Unit Price": item.unitPrice,
+          "Item Total": item.quantity * item.unitPrice,
+          "Invoice Discount": sale.discount,
+          "Invoice Delivery Charge": sale.deliveryCharge,
+          "Invoice Total": sale.total,
+      }))
+    });
+
+    if(dataToExport.length === 0) {
+        toast({
+            variant: 'destructive',
+            title: 'No Data',
+            description: 'There is no data to export for the selected period.',
+        });
+        return;
+    }
 
     const csv = Papa.unparse(dataToExport);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -176,7 +201,7 @@ export default function SalesListPage() {
                 </Popover>
               </div>
 
-              <Button onClick={handleDownloadCSV} variant='outline' disabled={filteredSales.length === 0}>
+              <Button onClick={handleDownloadCSV} variant='outline'>
                 <Download className='mr-2 h-4 w-4' />
                 Download CSV
               </Button>
@@ -203,7 +228,7 @@ export default function SalesListPage() {
                   <TableCell>{sale.customer.name}</TableCell>
                   <TableCell>
                      {sale.items && sale.items.length > 0
-                        ? sale.items.map(item => `${item.product.title} (x${item.quantity})`).join(', ')
+                        ? sale.items.map(item => `${item.title} (x${item.quantity})`).join(', ')
                         : 'N/A'
                      }
                   </TableCell>
@@ -239,7 +264,7 @@ export default function SalesListPage() {
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDelete(sale.id)}>Delete</AlertDialogAction>
+                          <AlertDialogAction className='bg-destructive hover:bg-destructive/90' onClick={() => handleDelete(sale.id)}>Delete</AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
