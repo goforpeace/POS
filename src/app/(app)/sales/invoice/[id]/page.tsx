@@ -9,10 +9,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import FreesiaLogo from '@/components/icons/FreesiaLogo';
 import { Printer } from 'lucide-react';
 import { useReactToPrint } from 'react-to-print';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function InvoicePage() {
   const params = useParams();
-  const { getSaleById } = useInventory();
+  const { getSaleById, loading } = useInventory();
   const [sale, setSale] = useState<Sale | null>(null);
   const invoiceRef = useRef<HTMLDivElement>(null);
 
@@ -27,6 +28,14 @@ export default function InvoicePage() {
     content: () => invoiceRef.current,
   });
   
+  if (loading) {
+    return (
+        <div className="space-y-4">
+            <Skeleton className="h-10 w-1/4" />
+            <Skeleton className="h-[70vh] w-full" />
+        </div>
+    )
+  }
 
   if (!sale) {
     return (
@@ -77,7 +86,7 @@ export default function InvoicePage() {
             </div>
             <div>
               <CardTitle className="text-3xl text-right">Invoice</CardTitle>
-              <p className="text-right">#{sale.id}</p>
+              <p className="text-right">#{sale.id.startsWith('Inv-') ? sale.id : `Inv-${sale.id.substring(0, 6)}...`}</p>
             </div>
           </CardHeader>
           <CardContent className="pt-6">

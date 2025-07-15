@@ -1,21 +1,18 @@
 
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useInventory, SaleItem, Product } from '@/context/inventory-context';
+import { useInventory, SaleItem } from '@/context/inventory-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
-import { Check, ChevronsUpDown, Plus, Trash2 } from 'lucide-react';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const newSaleSchema = z.object({
@@ -32,6 +29,7 @@ export default function NewSalePage() {
   const { products, addSale, getProductById } = useInventory();
   const { toast } = useToast();
   const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [items, setItems] = useState<SaleItem[]>([]);
   const [selectedProductId, setSelectedProductId] = useState<string>('');
@@ -63,7 +61,6 @@ export default function NewSalePage() {
     const product = getProductById(selectedProductId);
     if (!product) return;
 
-    // Check if item already exists
     const existingItem = items.find(item => item.product.id === product.id);
     if(existingItem) {
         handleQuantityChange(product.id, existingItem.quantity + 1);
@@ -104,26 +101,34 @@ export default function NewSalePage() {
     setItems(prev => prev.map(item => item.product.id === productId ? { ...item, title: newTitle } : item));
   }
 
-  const onSubmit = (values: NewSaleFormValues) => {
+  const onSubmit = async (values: NewSaleFormValues) => {
     if (items.length === 0) {
       toast({ variant: 'destructive', title: 'Error', description: 'Please add at least one product to the sale.' });
       return;
     }
+    setIsSubmitting(true);
 
-    const newSale = addSale({
-      customer: {
-        name: values.customerName,
-        phone: values.customerPhone,
-        address: values.customerAddress,
-      },
-      items: items,
-      discount: values.discount,
-      deliveryCharge: values.deliveryCharge,
-      total: total,
-    });
+    try {
+        const newSale = await addSale({
+          customer: {
+            name: values.customerName,
+            phone: values.customerPhone,
+            address: values.customerAddress,
+          },
+          items: items,
+          discount: values.discount,
+          deliveryCharge: values.deliveryCharge,
+          total: total,
+        });
 
-    toast({ title: 'Sale Recorded', description: `Invoice ${newSale.id} has been created.` });
-    router.push(`/sales/invoice/${newSale.id}`);
+        toast({ title: 'Sale Recorded', description: `Invoice ${newSale.id} has been created.` });
+        router.push(`/sales/invoice/${newSale.id}`);
+    } catch (error) {
+        console.error("Failed to create sale:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to record the sale. Please try again.' });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   return (
@@ -206,7 +211,10 @@ export default function NewSalePage() {
                 )}/>
                 <hr/>
                 <div className="flex justify-between text-xl font-bold"><span>Total</span><span>Tk. {total.toLocaleString()}</span></div>
-                <Button type="submit" className="w-full" disabled={items.length === 0}>Create Invoice</Button>
+                <Button type="submit" className="w-full" disabled={items.length === 0 || isSubmitting}>
+                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Create Invoice
+                </Button>
               </CardContent>
             </Card>
           </div>

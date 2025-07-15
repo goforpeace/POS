@@ -16,22 +16,27 @@ import { Calendar } from '@/components/ui/calendar';
 import { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 
-const StatCard = ({ title, value, icon, description }: { title: string; value: string; icon: React.ReactNode; description: string }) => (
+const StatCard = ({ title, value, icon, description, isLoading }: { title: string; value: string; icon: React.ReactNode; description: string, isLoading?: boolean }) => (
   <Card>
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
       <CardTitle className="text-sm font-medium">{title}</CardTitle>
       {icon}
     </CardHeader>
     <CardContent>
-      <div className="text-2xl font-bold">{value}</div>
+      {isLoading ? (
+        <Skeleton className="h-8 w-3/4" />
+      ) : (
+        <div className="text-2xl font-bold">{value}</div>
+      )}
       <p className="text-xs text-muted-foreground">{description}</p>
     </CardContent>
   </Card>
 );
 
 export default function DashboardPage() {
-  const { sales, products, getProductById } = useInventory();
+  const { sales, products, getProductById, loading } = useInventory();
   const [isClient, setIsClient] = useState(false);
   const [timeFilter, setTimeFilter] = useState('7days');
   const [yearFilter, setYearFilter] = useState(new Date().getFullYear().toString());
@@ -129,10 +134,9 @@ export default function DashboardPage() {
     return filteredSales.reduce((acc, sale) => {
       const revenue = getProductRevenue(sale);
       if (!sale.items || !Array.isArray(sale.items)) {
-          return acc + revenue; // Or some other default behavior
+          return acc + revenue; 
       }
       const costOfGoods = sale.items.reduce((itemAcc, item) => {
-        // Here we need to find the original product to get its cost
         const originalProduct = getProductById(item.product.id);
         if (originalProduct) {
           return itemAcc + (originalProduct.buyPrice + originalProduct.shippingCost) * item.quantity;
@@ -164,7 +168,7 @@ export default function DashboardPage() {
   }, [] as {date: string, total: number}[]).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   if (!isClient) {
-    return null; // Or a loading spinner
+    return null; 
   }
 
   return (
@@ -190,12 +194,12 @@ export default function DashboardPage() {
       </Card>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
-        <StatCard title="Daily Sales" value={`Tk. ${dailySales.toLocaleString()}`} icon={<DollarSign className="h-4 w-4 text-muted-foreground" />} description="Total sales for today" />
-        <StatCard title="Total Sales" value={`Tk. ${totalRevenue.toLocaleString()}`} icon={<ShoppingBag className="h-4 w-4 text-muted-foreground" />} description="Based on current filters" />
-        <StatCard title="Total Profit" value={`Tk. ${totalProfit.toLocaleString()}`} icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />} description="Based on current filters" />
-        <StatCard title="Total Stock" value={totalStock.toLocaleString()} icon={<Package className="h-4 w-4 text-muted-foreground" />} description="Active stock" />
-        <StatCard title="Price of Stock" value={`Tk. ${stockValue.toLocaleString()}`} icon={<Users className="h-4 w-4 text-muted-foreground" />} description="Active stock value" />
-        <StatCard title="Rejected Stock Value" value={`Tk. ${rejectedStockValue.toLocaleString()}`} icon={<PackageX className="h-4 w-4 text-muted-foreground" />} description="Total value of rejected items" />
+        <StatCard title="Daily Sales" value={`Tk. ${dailySales.toLocaleString()}`} icon={<DollarSign className="h-4 w-4 text-muted-foreground" />} description="Total sales for today" isLoading={loading} />
+        <StatCard title="Total Sales" value={`Tk. ${totalRevenue.toLocaleString()}`} icon={<ShoppingBag className="h-4 w-4 text-muted-foreground" />} description="Based on current filters" isLoading={loading} />
+        <StatCard title="Total Profit" value={`Tk. ${totalProfit.toLocaleString()}`} icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />} description="Based on current filters" isLoading={loading} />
+        <StatCard title="Total Stock" value={totalStock.toLocaleString()} icon={<Package className="h-4 w-4 text-muted-foreground" />} description="Active stock" isLoading={loading} />
+        <StatCard title="Price of Stock" value={`Tk. ${stockValue.toLocaleString()}`} icon={<Users className="h-4 w-4 text-muted-foreground" />} description="Active stock value" isLoading={loading} />
+        <StatCard title="Rejected Stock Value" value={`Tk. ${rejectedStockValue.toLocaleString()}`} icon={<PackageX className="h-4 w-4 text-muted-foreground" />} description="Total value of rejected items" isLoading={loading} />
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -274,19 +278,25 @@ export default function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={salesDataForChart}>
-                  <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `Tk.${value/1000}k`} />
-                  <Tooltip 
-                      cursor={{fill: 'hsl(var(--accent))'}}
-                      contentStyle={{backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}
-                      labelClassName='font-bold'
-                      formatter={(value: number) => [`Tk. ${value.toLocaleString()}`, 'Sales']}
-                  />
-                  <Bar dataKey="total" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            {loading ? (
+                <div className="w-full h-full flex items-center justify-center">
+                    <Skeleton className="w-full h-full" />
+                </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={salesDataForChart}>
+                    <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `Tk.${value/1000}k`} />
+                    <Tooltip 
+                        cursor={{fill: 'hsl(var(--accent))'}}
+                        contentStyle={{backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}
+                        labelClassName='font-bold'
+                        formatter={(value: number) => [`Tk. ${value.toLocaleString()}`, 'Sales']}
+                    />
+                    <Bar dataKey="total" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
         

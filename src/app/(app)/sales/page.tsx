@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Trash, Eye, Download, Calendar as CalendarIcon } from 'lucide-react';
+import { MoreHorizontal, Trash, Eye, Download, Calendar as CalendarIcon, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import {
@@ -26,9 +26,11 @@ import { format } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function SalesListPage() {
-  const { sales, deleteSale } = useInventory();
+  const { sales, deleteSale, loading } = useInventory();
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [filter, setFilter] = useState('');
   const { toast } = useToast();
   const router = useRouter();
@@ -45,7 +47,6 @@ export default function SalesListPage() {
     const now = new Date();
     switch (timeFilter) {
       case 'all':
-        // No date filter
         break;
       case '7days':
         const sevenDaysAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
@@ -75,12 +76,24 @@ export default function SalesListPage() {
 
   }, [sales, filter, timeFilter, customDateRange]);
   
-  const handleDelete = (saleId: string) => {
-    deleteSale(saleId);
-    toast({
-        title: "Sale Deleted",
-        description: "The sale has been removed and stock has been updated.",
-    });
+  const handleDelete = async (saleId: string) => {
+    setIsDeleting(saleId);
+    try {
+        await deleteSale(saleId);
+        toast({
+            title: "Sale Deleted",
+            description: "The sale has been removed and stock has been updated.",
+        });
+    } catch (error) {
+        console.error("Failed to delete sale:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Failed to delete sale.',
+        });
+    } finally {
+        setIsDeleting(null);
+    }
   };
 
   const handleViewInvoice = (saleId: string) => {
@@ -221,63 +234,77 @@ export default function SalesListPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredSales.map((sale) => (
-                <TableRow key={sale.id}>
-                  <TableCell>{new Date(sale.date).toLocaleDateString()}</TableCell>
-                  <TableCell className="font-medium">{sale.id}</TableCell>
-                  <TableCell>{sale.customer.name}</TableCell>
-                  <TableCell>
-                     {sale.items && sale.items.length > 0
-                        ? sale.items.map(item => `${item.title} (x${item.quantity})`).join(', ')
-                        : 'N/A'
-                     }
-                  </TableCell>
-                  <TableCell className="text-right">Tk. {sale.total.toLocaleString()}</TableCell>
-                  <TableCell>
-                    <AlertDialog>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleViewInvoice(sale.id)}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            <span>View Invoice</span>
-                          </DropdownMenuItem>
-                          <AlertDialogTrigger asChild>
-                            <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>
-                              <Trash className="mr-2 h-4 w-4" />
-                              <span>Delete</span>
-                            </DropdownMenuItem>
-                          </AlertDialogTrigger>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the sale record and restock the product quantity.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction className='bg-destructive hover:bg-destructive/90' onClick={() => handleDelete(sale.id)}>Delete</AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </TableCell>
+              {loading ? (
+                Array.from({length: 5}).map((_, i) => (
+                    <TableRow key={i}>
+                        <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-48" /></TableCell>
+                        <TableCell className="text-right"><Skeleton className="h-5 w-16 ml-auto" /></TableCell>
+                        <TableCell><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
+                    </TableRow>
+                ))
+              ) : filteredSales.length > 0 ? (
+                filteredSales.map((sale) => (
+                    <TableRow key={sale.id}>
+                        <TableCell>{new Date(sale.date).toLocaleDateString()}</TableCell>
+                        <TableCell className="font-medium">{sale.id.startsWith('Inv-') ? sale.id : `Inv-${sale.id.substring(0, 6)}...`}</TableCell>
+                        <TableCell>{sale.customer.name}</TableCell>
+                        <TableCell>
+                            {sale.items && sale.items.length > 0
+                            ? sale.items.map(item => `${item.title} (x${item.quantity})`).join(', ')
+                            : 'N/A'
+                            }
+                        </TableCell>
+                        <TableCell className="text-right">Tk. {sale.total.toLocaleString()}</TableCell>
+                        <TableCell>
+                        <AlertDialog>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 p-0" disabled={isDeleting === sale.id}>
+                                <span className="sr-only">Open menu</span>
+                                {isDeleting === sale.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreHorizontal className="h-4 w-4" />}
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleViewInvoice(sale.id)}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                <span>View Invoice</span>
+                              </DropdownMenuItem>
+                              <AlertDialogTrigger asChild>
+                                <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>
+                                  <Trash className="mr-2 h-4 w-4" />
+                                  <span>Delete</span>
+                                </DropdownMenuItem>
+                              </AlertDialogTrigger>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete the sale record and restock the product quantity.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction className='bg-destructive hover:bg-destructive/90' onClick={() => handleDelete(sale.id)}>Delete</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </TableCell>
+                    </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                    <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
+                    No sales found for the selected period.
+                    </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
-          {filteredSales.length === 0 && (
-            <div className="text-center py-10 text-muted-foreground">
-              No sales found for the selected period.
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>

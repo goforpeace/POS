@@ -2,6 +2,7 @@ import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { InventoryProvider } from '@/context/inventory-context';
+import { FirebaseProvider } from '@/lib/firebase'; // Ensure Firebase is initialized
 
 export const metadata: Metadata = {
   title: 'Freesia Finds POS',
