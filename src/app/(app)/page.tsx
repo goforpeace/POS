@@ -56,7 +56,7 @@ export default function DashboardPage() {
     let tempSales = sales;
 
     if (shipmentFilter !== 'all') {
-        tempSales = tempSales.filter(s => s.product.shipment === shipmentFilter);
+        tempSales = tempSales.filter(s => s.product && s.product.shipment === shipmentFilter);
     }
 
     const now = new Date();
@@ -100,6 +100,9 @@ export default function DashboardPage() {
   
   const totalProfit = useMemo(() => {
     return filteredSales.reduce((acc, sale) => {
+      if (!sale.product) {
+        return acc; // Skip this sale if product info is missing
+      }
       const revenue = getProductRevenue(sale);
       const costOfGoods = (sale.product.buyPrice + sale.product.shippingCost) * sale.quantity;
       const profit = revenue - costOfGoods;
