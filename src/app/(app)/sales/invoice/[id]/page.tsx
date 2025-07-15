@@ -130,6 +130,12 @@ export default function InvoicePage() {
                   <span>Discount</span>
                   <span>- Tk. {sale.discount.toLocaleString()}</span>
                 </div>
+                {sale.deliveryCharge > 0 && (
+                  <div className="flex justify-between">
+                    <span>Delivery Charge</span>
+                    <span>+ Tk. {sale.deliveryCharge.toLocaleString()}</span>
+                  </div>
+                )}
                 <hr />
                 <div className="flex justify-between font-bold text-lg">
                   <span>Total</span>

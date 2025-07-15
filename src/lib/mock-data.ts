@@ -55,7 +55,8 @@ export const mockSales: Sale[] = [
     product: mockProducts[0],
     quantity: 1,
     discount: 100,
-    total: 2300,
+    deliveryCharge: 60,
+    total: 2360,
     date: new Date(new Date().setDate(new Date().getDate() - 1)),
   },
   {
@@ -64,6 +65,7 @@ export const mockSales: Sale[] = [
     product: mockProducts[1],
     quantity: 2,
     discount: 0,
+    deliveryCharge: 0,
     total: 3060,
     date: new Date(new Date().setDate(new Date().getDate() - 3)),
   },
@@ -73,9 +75,8 @@ export const mockSales: Sale[] = [
     product: mockProducts[2],
     quantity: 1,
     discount: 500,
-    total: 8860,
+    deliveryCharge: 120,
+    total: 8980,
     date: new Date(new Date().setDate(new Date().getDate() - 5)),
   },
 ];
-
-    

@@ -23,8 +23,7 @@ export interface Sale {
   product: Product;
   quantity: number;
   discount: number;
+  deliveryCharge: number;
   total: number;
   date: Date;
 }
-
-    

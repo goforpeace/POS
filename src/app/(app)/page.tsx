@@ -92,18 +92,27 @@ export default function DashboardPage() {
     }
   }, [sales, timeFilter, shipmentFilter, yearFilter, monthFilter, customDateRange]);
   
-  const totalRevenue = filteredSales.reduce((acc, sale) => acc + sale.total, 0);
-  const dailySales = sales.filter(s => new Date(s.date).toDateString() === new Date().toDateString()).reduce((acc, sale) => acc + sale.total, 0);
+  const getProductRevenue = (sale: typeof sales[0]) => {
+    return sale.total - (sale.deliveryCharge || 0);
+  };
+
+  const totalRevenue = filteredSales.reduce((acc, sale) => acc + getProductRevenue(sale), 0);
+  
+  const dailySales = sales
+    .filter(s => new Date(s.date).toDateString() === new Date().toDateString())
+    .reduce((acc, sale) => acc + getProductRevenue(sale), 0);
+  
   const totalStock = filteredProducts.reduce((acc, p) => acc + p.quantity, 0);
   const stockValue = filteredProducts.reduce((acc, p) => acc + (p.buyPrice + p.shippingCost) * p.quantity, 0);
 
   const salesDataForChart = filteredSales.reduce((acc, sale) => {
     const date = new Date(sale.date).toLocaleDateString('en-CA');
     const existing = acc.find(item => item.date === date);
+    const revenue = getProductRevenue(sale);
     if(existing) {
-        existing.total += sale.total;
+        existing.total += revenue;
     } else {
-        acc.push({ date, total: sale.total });
+        acc.push({ date, total: revenue });
     }
     return acc;
   }, [] as {date: string, total: number}[]).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());

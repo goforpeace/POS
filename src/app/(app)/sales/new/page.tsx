@@ -2,7 +2,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useInventory } from '@/context/inventory-context';
@@ -15,77 +15,21 @@ import { useRouter } from 'next/navigation';
 import { Product } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Check, ChevronsUpDown, X } from 'lucide-react';
+import { Check, ChevronsUpDown } from 'lucide-react';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-
-const saleProductSchema = z.object({
-  productId: z.string(),
-  title: z.string(),
-  image: z.string(),
-  quantity: z.coerce.number().min(1, "Quantity must be at least 1"),
-  sellPrice: z.coerce.number().min(0, 'Sell price cannot be negative'),
-  maxStock: z.coerce.number(),
-});
 
 const newSaleSchema = z.object({
   customerName: z.string().min(2, 'Name is required'),
   customerPhone: z.string().min(11, 'Valid phone number is required'),
   customerAddress: z.string().min(5, 'Address is required'),
-  products: z.array(saleProductSchema).min(1, "Please add at least one product."),
+  productId: z.string().min(1, "Please select a product"),
+  quantity: z.coerce.number().min(1, "Quantity must be at least 1"),
+  unitPrice: z.coerce.number().min(0),
   discount: z.coerce.number().min(0).default(0),
+  deliveryCharge: z.coerce.number().min(0).default(0),
 });
 
 type NewSaleFormValues = z.infer<typeof newSaleSchema>;
-
-const ProductSelector = ({ onProductSelected }: { onProductSelected: (product: Product) => void }) => {
-    const { products } = useInventory();
-    const [popoverOpen, setPopoverOpen] = useState(false);
-    const availableProducts = products.filter(p => p.status === 'active' && p.quantity > 0);
-
-    return (
-        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-            <PopoverTrigger asChild>
-                <Button
-                    variant="outline"
-                    role="combobox"
-                    className="w-full justify-between"
-                >
-                    Select a product to add...
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                <Command>
-                    <CommandInput placeholder="Search product..." />
-                    <CommandList>
-                        <CommandEmpty>No product found.</CommandEmpty>
-                        <CommandGroup>
-                            {availableProducts.map((p) => (
-                                <CommandItem
-                                    key={p.id}
-                                    value={p.title}
-                                    onSelect={() => {
-                                        onProductSelected(p);
-                                        setPopoverOpen(false);
-                                    }}
-                                >
-                                    <div className='flex items-center gap-4 w-full'>
-                                        <Image src={p.image} alt={p.title} width={40} height={40} className='rounded-md' data-ai-hint="product photo"/>
-                                        <div className='flex-1'>
-                                            <div className='font-medium'>{p.title}</div>
-                                            <div className='text-xs text-muted-foreground'>Stock: {p.quantity}</div>
-                                        </div>
-                                    </div>
-                                </CommandItem>
-                            ))}
-                        </CommandGroup>
-                    </CommandList>
-                </Command>
-            </PopoverContent>
-        </Popover>
-    );
-};
 
 export default function NewSalePage() {
   const { products, addSale, getProductById } = useInventory();
@@ -95,57 +39,80 @@ export default function NewSalePage() {
   const form = useForm<NewSaleFormValues>({
     resolver: zodResolver(newSaleSchema),
     defaultValues: {
-      customerName: '', customerPhone: '', customerAddress: '',
-      products: [],
+      customerName: '',
+      customerPhone: '',
+      customerAddress: '',
+      productId: '',
+      quantity: 1,
+      unitPrice: 0,
       discount: 0,
+      deliveryCharge: 0,
     },
   });
 
-  const { control, handleSubmit, watch, formState: { errors } } = form;
+  const { control, handleSubmit, watch, setValue, formState: { errors } } = form;
 
-  const { fields, append, remove, update } = useFieldArray({
-    control,
-    name: "products",
-  });
+  const [popoverOpen, setPopoverOpen] = useState(false);
 
-  const watchedProducts = watch("products");
-  const discount = watch("discount");
-
-  const handleProductSelected = (product: Product) => {
-    const existingProductIndex = fields.findIndex(item => item.productId === product.id);
-    if (existingProductIndex !== -1) {
-        const existingProduct = fields[existingProductIndex];
-        if (existingProduct.quantity < product.quantity) {
-             update(existingProductIndex, {
-                ...existingProduct,
-                quantity: existingProduct.quantity + 1,
-            });
-        } else {
-            toast({ variant: 'destructive', title: 'Stock limit reached', description: `Cannot add more ${product.title}.` });
-        }
+  const selectedProductId = watch('productId');
+  const quantity = watch('quantity');
+  const unitPrice = watch('unitPrice');
+  const discount = watch('discount');
+  const deliveryCharge = watch('deliveryCharge');
+  
+  const selectedProduct = selectedProductId ? getProductById(selectedProductId) : null;
+  
+  useEffect(() => {
+    if (selectedProduct) {
+      setValue('unitPrice', selectedProduct.sellPrice);
+      setValue('quantity', 1);
     } else {
-      append({
-        productId: product.id,
-        title: product.title,
-        image: product.image,
-        quantity: 1,
-        sellPrice: product.sellPrice,
-        maxStock: product.quantity,
-      });
+      setValue('unitPrice', 0);
+      setValue('quantity', 1);
     }
-  };
-
-  const subtotal = watchedProducts.reduce((acc, p) => acc + (p.sellPrice * p.quantity), 0);
-  const total = subtotal - discount;
+  }, [selectedProductId, selectedProduct, setValue]);
+  
+  const subtotal = unitPrice * quantity;
+  const total = subtotal - discount + deliveryCharge;
 
   const onSubmit = (values: NewSaleFormValues) => {
-    // Logic for creating invoice with multiple products will be implemented here
-    toast({
-        title: "Multi-product sale ready!",
-        description: `Ready to create an invoice for ${values.products.length} products.`,
+    if (!selectedProduct) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Please select a valid product.',
+      });
+      return;
+    }
+
+    if (values.quantity > selectedProduct.quantity) {
+      toast({
+        variant: 'destructive',
+        title: 'Stock Error',
+        description: `Not enough stock for ${selectedProduct.title}. Only ${selectedProduct.quantity} available.`,
+      });
+      return;
+    }
+
+    const newSale = addSale({
+      customer: {
+        name: values.customerName,
+        phone: values.customerPhone,
+        address: values.customerAddress,
+      },
+      product: selectedProduct,
+      quantity: values.quantity,
+      unitPrice: values.unitPrice,
+      discount: values.discount,
+      deliveryCharge: values.deliveryCharge,
+      total: total,
     });
-    console.log(values);
-    // router.push(`/sales/invoice/${newSale.id});
+
+    toast({
+      title: 'Sale Recorded',
+      description: `Invoice ${newSale.id} has been created.`,
+    });
+    router.push(`/sales/invoice/${newSale.id}`);
   };
 
   return (
@@ -159,77 +126,92 @@ export default function NewSalePage() {
                 <CardTitle>Customer Information</CardTitle>
               </CardHeader>
               <CardContent className="grid md:grid-cols-2 gap-6">
-                <FormField control={form.control} name="customerName" render={({ field }) => ( <FormItem> <FormLabel>Customer Name</FormLabel> <FormControl><Input placeholder="Full Name" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                <FormField control={form.control} name="customerPhone" render={({ field }) => ( <FormItem> <FormLabel>Phone Number</FormLabel> <FormControl><Input placeholder="01xxxxxxxxx" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                <FormField control={form.control} name="customerAddress" render={({ field }) => ( <FormItem className="md:col-span-2"> <FormLabel>Address</FormLabel> <FormControl><Input placeholder="Street, City" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                <FormField control={control} name="customerName" render={({ field }) => ( <FormItem> <FormLabel>Customer Name</FormLabel> <FormControl><Input placeholder="Full Name" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                <FormField control={control} name="customerPhone" render={({ field }) => ( <FormItem> <FormLabel>Phone Number</FormLabel> <FormControl><Input placeholder="01xxxxxxxxx" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                <FormField control={control} name="customerAddress" render={({ field }) => ( <FormItem className="md:col-span-2"> <FormLabel>Address</FormLabel> <FormControl><Input placeholder="Street, City" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Products</CardTitle>
+                <CardTitle>Product Details</CardTitle>
               </CardHeader>
               <CardContent className='space-y-4'>
-                <ProductSelector onProductSelected={handleProductSelected} />
-                {errors.products && <p className="text-sm font-medium text-destructive">{errors.products.message}</p>}
+                <FormField
+                  control={control}
+                  name="productId"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Product</FormLabel>
+                      <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              className={cn(
+                                "w-full justify-between",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value
+                                ? products.find(
+                                    (p) => p.id === field.value
+                                  )?.title
+                                : "Select a product"}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                          <Command>
+                            <CommandInput placeholder="Search product..." />
+                            <CommandList>
+                                <CommandEmpty>No product found.</CommandEmpty>
+                                <CommandGroup>
+                                  {products.filter(p => p.status === 'active' && p.quantity > 0).map((p) => (
+                                    <CommandItem
+                                      value={p.title}
+                                      key={p.id}
+                                      onSelect={() => {
+                                        setValue("productId", p.id)
+                                        setPopoverOpen(false)
+                                      }}
+                                    >
+                                      <Check
+                                        className={cn(
+                                          "mr-2 h-4 w-4",
+                                          p.id === field.value
+                                            ? "opacity-100"
+                                            : "opacity-0"
+                                        )}
+                                      />
+                                      {p.title}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 
-                <div className="rounded-md border">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-[80px]">Image</TableHead>
-                                <TableHead>Product</TableHead>
-                                <TableHead className="w-[120px]">Quantity</TableHead>
-                                <TableHead className="w-[150px]">Unit Price (Tk.)</TableHead>
-                                <TableHead className="text-right w-[150px]">Total (Tk.)</TableHead>
-                                <TableHead className="w-[50px]"></TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {fields.length === 0 && (
-                                <TableRow>
-                                    <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
-                                        No products added yet.
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                            {fields.map((item, index) => (
-                                <TableRow key={item.id}>
-                                    <TableCell>
-                                        <Image src={item.image} alt={item.title} width={40} height={40} className="rounded-md" data-ai-hint="product photo" />
-                                    </TableCell>
-                                    <TableCell className="font-medium">{item.title}</TableCell>
-                                    <TableCell>
-                                        <Controller
-                                            control={control}
-                                            name={`products.${index}.quantity`}
-                                            render={({ field }) => (
-                                                <Input type="number" {...field} min="1" max={item.maxStock} className="h-8"/>
-                                            )}
-                                        />
-                                    </TableCell>
-                                    <TableCell>
-                                        <Controller
-                                            control={control}
-                                            name={`products.${index}.sellPrice`}
-                                            render={({ field }) => (
-                                                <Input type="number" {...field} className="h-8"/>
-                                            )}
-                                        />
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        {(watchedProducts[index].quantity * watchedProducts[index].sellPrice).toLocaleString()}
-                                    </TableCell>
-                                    <TableCell>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => remove(index)}>
-                                            <X className="h-4 w-4 text-destructive" />
-                                        </Button>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </div>
+                {selectedProduct && (
+                   <div className="flex gap-4 items-start bg-muted p-4 rounded-lg">
+                      <Image src={selectedProduct.image} alt={selectedProduct.title} width={100} height={100} className='rounded-md' data-ai-hint="product photo"/>
+                      <div className='flex-1 grid grid-cols-2 gap-4'>
+                        <FormField control={control} name="quantity" render={({ field }) => ( <FormItem> <FormLabel>Quantity</FormLabel> <FormControl><Input type="number" {...field} min={1} max={selectedProduct.quantity} /></FormControl> <FormMessage /> </FormItem> )} />
+                        <FormField control={control} name="unitPrice" render={({ field }) => ( <FormItem> <FormLabel>Sell Price (Tk.)</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                        <div className='col-span-2 text-sm text-muted-foreground'>
+                            <p>Stock Available: {selectedProduct.quantity}</p>
+                            <p>Default Price: Tk. {selectedProduct.sellPrice.toLocaleString()}</p>
+                        </div>
+                      </div>
+                   </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -243,7 +225,7 @@ export default function NewSalePage() {
               <CardContent className="space-y-4">
                 <div className="flex justify-between"><span>Subtotal</span><span>Tk. {subtotal.toLocaleString()}</span></div>
                 <FormField
-                  control={form.control} name="discount"
+                  control={control} name="discount"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Discount (Tk.)</FormLabel>
@@ -252,9 +234,19 @@ export default function NewSalePage() {
                     </FormItem>
                   )}
                 />
+                 <FormField
+                  control={control} name="deliveryCharge"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Delivery Charge (Tk.)</FormLabel>
+                      <FormControl><Input type="number" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <hr/>
                 <div className="flex justify-between text-xl font-bold"><span>Total</span><span>Tk. {total.toLocaleString()}</span></div>
-                <Button type="submit" className="w-full" disabled={fields.length === 0}>Create Invoice</Button>
+                <Button type="submit" className="w-full" disabled={!selectedProductId}>Create Invoice</Button>
               </CardContent>
             </Card>
           </div>

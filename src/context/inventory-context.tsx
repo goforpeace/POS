@@ -111,7 +111,6 @@ export const InventoryProvider = ({ children }: { children: ReactNode }) => {
   const addSale = (saleData: AddSaleData): Sale => {
     const nextCounter = invoiceCounter + 1;
     
-    // Create a copy of the product to store in the sale, with the potentially overridden price
     const productForSale = {
       ...saleData.product,
       sellPrice: saleData.unitPrice !== undefined ? saleData.unitPrice : saleData.product.sellPrice,
@@ -122,6 +121,7 @@ export const InventoryProvider = ({ children }: { children: ReactNode }) => {
       product: productForSale,
       quantity: saleData.quantity,
       discount: saleData.discount,
+      deliveryCharge: saleData.deliveryCharge || 0,
       total: saleData.total,
       id: `Inv-${nextCounter}`,
       date: new Date(),
@@ -184,5 +184,4 @@ export const useInventory = () => {
   return context;
 };
 
-// Also exporting types to be used in components
 export type { Product, Sale };
