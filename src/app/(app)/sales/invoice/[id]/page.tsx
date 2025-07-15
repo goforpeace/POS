@@ -36,8 +36,7 @@ export default function InvoicePage() {
     );
   }
 
-  const unitPrice = sale.product.sellPrice;
-  const subtotal = unitPrice * sale.quantity;
+  const subtotal = sale.items.reduce((acc, item) => acc + item.unitPrice * item.quantity, 0);
 
   return (
     <>
@@ -105,16 +104,18 @@ export default function InvoicePage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                <TableRow>
-                  <TableCell>{sale.product.title}</TableCell>
-                  <TableCell className="text-center">{sale.quantity}</TableCell>
-                  <TableCell className="text-right">
-                    Tk. {unitPrice.toLocaleString()}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    Tk. {subtotal.toLocaleString()}
-                  </TableCell>
-                </TableRow>
+                 {sale.items.map(item => (
+                  <TableRow key={item.product.id}>
+                    <TableCell>{item.title}</TableCell>
+                    <TableCell className="text-center">{item.quantity}</TableCell>
+                    <TableCell className="text-right">
+                      Tk. {item.unitPrice.toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      Tk. {(item.unitPrice * item.quantity).toLocaleString()}
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
 
