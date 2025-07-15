@@ -72,8 +72,8 @@ export default function NewSalePage() {
     }
   }, [selectedProductId, selectedProduct, setValue]);
   
-  const subtotal = unitPrice * quantity;
-  const total = subtotal - discount + deliveryCharge;
+  const subtotal = (Number(unitPrice) || 0) * (Number(quantity) || 0);
+  const total = subtotal - (Number(discount) || 0) + (Number(deliveryCharge) || 0);
 
   const onSubmit = (values: NewSaleFormValues) => {
     if (!selectedProduct) {
