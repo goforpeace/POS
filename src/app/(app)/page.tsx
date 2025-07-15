@@ -3,10 +3,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
-import { ArrowUpRight, Calendar as CalendarIcon, DollarSign, Package, ShoppingBag, Users, PackageX, TrendingUp } from 'lucide-react';
+import { ArrowUpRight, Calendar as CalendarIcon, DollarSign, Package, ShoppingBag, Users, PackageX, TrendingUp, Calculator } from 'lucide-react';
 import FacebookLogo from '@/components/icons/FacebookLogo';
 import DeliveryLogo from '@/components/icons/DeliveryLogo';
 import { useInventory } from '@/context/inventory-context';
@@ -15,6 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
+import { Input } from '@/components/ui/input';
 
 const StatCard = ({ title, value, icon, description }: { title: string; value: string; icon: React.ReactNode; description: string }) => (
   <Card>
@@ -36,6 +37,26 @@ export default function DashboardPage() {
   const [yearFilter, setYearFilter] = useState(new Date().getFullYear().toString());
   const [monthFilter, setMonthFilter] = useState((new Date().getMonth() + 1).toString());
   const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>();
+
+  // State for Profit Calculator
+  const [calcProductId, setCalcProductId] = useState<string>('');
+  const [calcSellPrice, setCalcSellPrice] = useState<string>('');
+  
+  const selectedProductForCalc = useMemo(() => {
+    if(!calcProductId) return null;
+    return getProductById(calcProductId);
+  }, [calcProductId, getProductById]);
+
+  const productCost = useMemo(() => {
+    if (!selectedProductForCalc) return 0;
+    return selectedProductForCalc.buyPrice + selectedProductForCalc.shippingCost;
+  }, [selectedProductForCalc]);
+
+  const expectedProfit = useMemo(() => {
+    const sellPrice = parseFloat(calcSellPrice);
+    if (!selectedProductForCalc || isNaN(sellPrice)) return 0;
+    return sellPrice - productCost;
+  }, [calcSellPrice, productCost, selectedProductForCalc]);
 
   useEffect(() => {
     setIsClient(true);
@@ -168,97 +189,140 @@ export default function DashboardPage() {
         <StatCard title="Price of Stock" value={`Tk. ${stockValue.toLocaleString()}`} icon={<Users className="h-4 w-4 text-muted-foreground" />} description="Active stock value" />
         <StatCard title="Rejected Stock Value" value={`Tk. ${rejectedStockValue.toLocaleString()}`} icon={<PackageX className="h-4 w-4 text-muted-foreground" />} description="Total value of rejected items" />
       </div>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <div className="flex flex-wrap justify-between items-center gap-4">
+              <CardTitle>Sales Report</CardTitle>
+              <div className="flex flex-wrap items-center gap-2">
+                  <Button variant={timeFilter === '7days' ? 'default' : 'outline'} size="sm" onClick={() => setTimeFilter('7days')}>Last 7 Days</Button>
+                  <Button variant={timeFilter === '15days' ? 'default' : 'outline'} size="sm" onClick={() => setTimeFilter('15days')}>Last 15 Days</Button>
+                  <Button variant={timeFilter === '30days' ? 'default' : 'outline'} size="sm" onClick={() => setTimeFilter('30days')}>Last 30 Days</Button>
+                  <Button variant={timeFilter === 'month' ? 'default' : 'outline'} size="sm" onClick={() => setTimeFilter('month')}>Month</Button>
+                  <Button variant={timeFilter === 'year' ? 'default' : 'outline'} size="sm" onClick={() => setTimeFilter('year')}>Year</Button>
 
-      <Card>
-        <CardHeader>
-          <div className="flex flex-wrap justify-between items-center gap-4">
-            <CardTitle>Sales Report</CardTitle>
-            <div className="flex flex-wrap items-center gap-2">
-                <Button variant={timeFilter === '7days' ? 'default' : 'outline'} size="sm" onClick={() => setTimeFilter('7days')}>Last 7 Days</Button>
-                <Button variant={timeFilter === '15days' ? 'default' : 'outline'} size="sm" onClick={() => setTimeFilter('15days')}>Last 15 Days</Button>
-                <Button variant={timeFilter === '30days' ? 'default' : 'outline'} size="sm" onClick={() => setTimeFilter('30days')}>Last 30 Days</Button>
-                <Button variant={timeFilter === 'month' ? 'default' : 'outline'} size="sm" onClick={() => setTimeFilter('month')}>Month</Button>
-                <Button variant={timeFilter === 'year' ? 'default' : 'outline'} size="sm" onClick={() => setTimeFilter('year')}>Year</Button>
-
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      id="date"
-                      variant={timeFilter === 'custom' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setTimeFilter('custom')}
-                      className="w-[240px] justify-start text-left font-normal"
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {customDateRange?.from ? (
-                        customDateRange.to ? (
-                          <>
-                            {format(customDateRange.from, "LLL dd, y")} -{" "}
-                            {format(customDateRange.to, "LLL dd, y")}
-                          </>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        id="date"
+                        variant={timeFilter === 'custom' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setTimeFilter('custom')}
+                        className="w-[240px] justify-start text-left font-normal"
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {customDateRange?.from ? (
+                          customDateRange.to ? (
+                            <>
+                              {format(customDateRange.from, "LLL dd, y")} -{" "}
+                              {format(customDateRange.to, "LLL dd, y")}
+                            </>
+                          ) : (
+                            format(customDateRange.from, "LLL dd, y")
+                          )
                         ) : (
-                          format(customDateRange.from, "LLL dd, y")
-                        )
-                      ) : (
-                        <span>Custom Range</span>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      initialFocus
-                      mode="range"
-                      defaultMonth={customDateRange?.from}
-                      selected={customDateRange}
-                      onSelect={setCustomDateRange}
-                      numberOfMonths={2}
-                    />
-                  </PopoverContent>
-                </Popover>
+                          <span>Custom Range</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        initialFocus
+                        mode="range"
+                        defaultMonth={customDateRange?.from}
+                        selected={customDateRange}
+                        onSelect={setCustomDateRange}
+                        numberOfMonths={2}
+                      />
+                    </PopoverContent>
+                  </Popover>
 
-                {timeFilter === 'month' && (
-                     <>
-                        <Select onValueChange={setMonthFilter} defaultValue={monthFilter}>
-                            <SelectTrigger className="w-[120px]"><SelectValue placeholder="Month" /></SelectTrigger>
-                            <SelectContent>
-                                {Array.from({length: 12}, (_, i) => i + 1).map(m => <SelectItem key={m} value={m.toString()}>{new Date(0, m-1).toLocaleString('default', { month: 'long' })}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                        <Select onValueChange={setYearFilter} defaultValue={yearFilter}>
-                            <SelectTrigger className="w-[100px]"><SelectValue placeholder="Year" /></SelectTrigger>
-                            <SelectContent>
-                                {availableYears.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                     </>
-                )}
-                {timeFilter === 'year' && (
-                    <Select onValueChange={setYearFilter} defaultValue={yearFilter}>
-                        <SelectTrigger className="w-[100px]"><SelectValue placeholder="Year" /></SelectTrigger>
-                        <SelectContent>
-                            {availableYears.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                )}
+                  {timeFilter === 'month' && (
+                       <>
+                          <Select onValueChange={setMonthFilter} defaultValue={monthFilter}>
+                              <SelectTrigger className="w-[120px]"><SelectValue placeholder="Month" /></SelectTrigger>
+                              <SelectContent>
+                                  {Array.from({length: 12}, (_, i) => i + 1).map(m => <SelectItem key={m} value={m.toString()}>{new Date(0, m-1).toLocaleString('default', { month: 'long' })}</SelectItem>)}
+                              </SelectContent>
+                          </Select>
+                          <Select onValueChange={setYearFilter} defaultValue={yearFilter}>
+                              <SelectTrigger className="w-[100px]"><SelectValue placeholder="Year" /></SelectTrigger>
+                              <SelectContent>
+                                  {availableYears.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}
+                              </SelectContent>
+                          </Select>
+                       </>
+                  )}
+                  {timeFilter === 'year' && (
+                      <Select onValueChange={setYearFilter} defaultValue={yearFilter}>
+                          <SelectTrigger className="w-[100px]"><SelectValue placeholder="Year" /></SelectTrigger>
+                          <SelectContent>
+                              {availableYears.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}
+                          </SelectContent>
+                      </Select>
+                  )}
+              </div>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent className="h-80">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={salesDataForChart}>
-                <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `Tk.${value/1000}k`} />
-                <Tooltip 
-                    cursor={{fill: 'hsl(var(--accent))'}}
-                    contentStyle={{backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}
-                    labelClassName='font-bold'
-                    formatter={(value: number) => [`Tk. ${value.toLocaleString()}`, 'Sales']}
-                />
-                <Bar dataKey="total" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={salesDataForChart}>
+                  <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `Tk.${value/1000}k`} />
+                  <Tooltip 
+                      cursor={{fill: 'hsl(var(--accent))'}}
+                      contentStyle={{backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}
+                      labelClassName='font-bold'
+                      formatter={(value: number) => [`Tk. ${value.toLocaleString()}`, 'Sales']}
+                  />
+                  <Bar dataKey="total" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+        
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Calculator className="h-5 w-5"/> Profit Calculator</CardTitle>
+                <CardDescription>Quickly calculate expected profit for a product.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <Select onValueChange={setCalcProductId}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select a product..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {products.filter(p => p.status === 'active').map(p => (
+                            <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                
+                {selectedProductForCalc && (
+                    <div className="space-y-4 rounded-lg border p-4">
+                        <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium">Product Cost:</span>
+                            <span className="font-bold">Tk. {productCost.toLocaleString()}</span>
+                        </div>
+                         <div className="space-y-2">
+                             <label className="text-sm font-medium">Sell Price:</label>
+                             <Input 
+                                type="number" 
+                                placeholder="Enter sell price" 
+                                value={calcSellPrice} 
+                                onChange={(e) => setCalcSellPrice(e.target.value)}
+                             />
+                         </div>
+                         <div className="flex justify-between items-center pt-2 border-t">
+                            <span className="text-sm font-medium text-primary">Expected Profit:</span>
+                            <span className={`font-bold text-lg ${expectedProfit > 0 ? 'text-green-600' : 'text-red-600'}`}>Tk. {expectedProfit.toLocaleString()}</span>
+                        </div>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
