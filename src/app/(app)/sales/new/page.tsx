@@ -155,9 +155,10 @@ export default function NewSalePage() {
                               )}
                             >
                               {field.value
-                                ? products.find(
-                                    (p) => p.id === field.value
-                                  )?.title
+                                ? <span className='flex items-center gap-2'>
+                                    <Image src={products.find(p => p.id === field.value)?.image || ''} alt="" width={20} height={20} className='rounded-sm' />
+                                    {products.find(p => p.id === field.value)?.title}
+                                  </span>
                                 : "Select a product"}
                               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
@@ -186,7 +187,10 @@ export default function NewSalePage() {
                                             : "opacity-0"
                                         )}
                                       />
-                                      {p.title}
+                                      <div className="flex items-center gap-2">
+                                        <Image src={p.image} alt={p.title} width={24} height={24} className="rounded-sm" />
+                                        <span>{p.title}</span>
+                                      </div>
                                     </CommandItem>
                                   ))}
                                 </CommandGroup>
@@ -229,7 +233,7 @@ export default function NewSalePage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Discount (Tk.)</FormLabel>
-                      <FormControl><Input type="number" {...field} /></FormControl>
+                      <FormControl><Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))}/></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -239,7 +243,7 @@ export default function NewSalePage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Delivery Charge (Tk.)</FormLabel>
-                      <FormControl><Input type="number" {...field} /></FormControl>
+                      <FormControl><Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))}/></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}

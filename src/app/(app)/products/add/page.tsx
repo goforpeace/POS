@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { Textarea } from '@/components/ui/textarea';
 
 const addProductSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
@@ -29,6 +30,7 @@ const addProductSchema = z.object({
   markup: z.coerce.number().min(0, 'Markup cannot be negative'),
   sellPrice: z.coerce.number().min(0),
   image: z.string().url('Must be a valid URL'),
+  description: z.string().optional(),
 });
 
 export default function AddProductPage() {
@@ -48,6 +50,7 @@ export default function AddProductPage() {
       markup: 10,
       sellPrice: 0,
       image: 'https://placehold.co/400x400.png',
+      description: '',
     },
   });
 
@@ -79,6 +82,7 @@ export default function AddProductPage() {
       shippingCost: values.shippingCost,
       sellPrice: values.sellPrice,
       image: values.image,
+      description: values.description,
     });
     toast({
       title: 'Product Added',
@@ -106,6 +110,19 @@ export default function AddProductPage() {
                       <FormLabel>Product Title</FormLabel>
                       <FormControl>
                         <Input placeholder="e.g. Elegant Lace Dress" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Describe the product..." {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

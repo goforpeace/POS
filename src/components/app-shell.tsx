@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -26,6 +27,7 @@ import {
   Settings,
   ChevronDown,
   ClipboardList,
+  MessageSquareQuote,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import {
@@ -94,6 +96,14 @@ const AppShell = ({ children }: { children: React.ReactNode }) => {
                       <SidebarMenuButton size="sm" isActive={isActive('/products/add')}>
                         <PlusCircle />
                         <span>Add Product</span>
+                      </SidebarMenuButton>
+                    </Link>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <Link href="/products/description">
+                      <SidebarMenuButton size="sm" isActive={isActive('/products/description')}>
+                        <MessageSquareQuote />
+                        <span>Description</span>
                       </SidebarMenuButton>
                     </Link>
                   </SidebarMenuItem>

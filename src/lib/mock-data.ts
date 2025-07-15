@@ -12,6 +12,7 @@ export const mockProducts: Product[] = [
     shippingCost: 100,
     sellPrice: 2400,
     status: 'active',
+    description: 'A beautiful and elegant lace dress, perfect for formal occasions. Made from high-quality materials for a comfortable fit.'
   },
   {
     id: 'prod2',
@@ -23,6 +24,7 @@ export const mockProducts: Product[] = [
     shippingCost: 50,
     sellPrice: 1530,
     status: 'active',
+    description: 'A comfortable and stylish cotton kurti for daily wear. Features a unique print and a modern design.'
   },
   {
     id: 'prod3',
@@ -34,6 +36,7 @@ export const mockProducts: Product[] = [
     shippingCost: 200,
     sellPrice: 9360,
     status: 'active',
+    description: 'An exquisite designer silk saree with intricate patterns. Ideal for weddings and grand celebrations.'
   },
     {
     id: 'prod4',
@@ -45,6 +48,7 @@ export const mockProducts: Product[] = [
     shippingCost: 50,
     sellPrice: 500,
     status: 'rejected',
+    description: 'A soft, hand-woven scarf made from organic wool. Comes in various colors.'
   },
 ];
 

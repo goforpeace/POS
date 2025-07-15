@@ -33,6 +33,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Textarea } from '@/components/ui/textarea';
 
 
 const editProductSchema = z.object({
@@ -42,6 +43,7 @@ const editProductSchema = z.object({
   buyPrice: z.coerce.number().min(0, 'Buy price cannot be negative'),
   shippingCost: z.coerce.number().min(0, 'Shipping cost cannot be negative'),
   sellPrice: z.coerce.number().min(0, 'Sell price cannot be negative'),
+  description: z.string().optional(),
 });
 
 
@@ -206,23 +208,27 @@ export default function ProductsPage() {
       </AlertDialog>
 
       <Dialog open={!!productToView} onOpenChange={(open) => !open && setProductToView(null)}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>{productToView?.title}</DialogTitle>
              <DialogDescription>
                 Shipment: {productToView?.shipment} | Quantity in stock: {productToView?.quantity}
               </DialogDescription>
           </DialogHeader>
-          <div className="flex justify-center items-center p-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
              {productToView?.image && (
                 <Image
                   src={productToView.image}
                   alt={productToView.title}
                   width={300}
                   height={300}
-                  className="rounded-lg object-cover"
+                  className="rounded-lg object-cover w-full"
                 />
               )}
+              <div className="space-y-4">
+                  <h3 className="font-semibold">Description</h3>
+                  <p className="text-sm text-muted-foreground">{productToView?.description || 'No description available.'}</p>
+              </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -246,6 +252,19 @@ export default function ProductsPage() {
                         <FormLabel>Product Title</FormLabel>
                         <FormControl>
                           <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

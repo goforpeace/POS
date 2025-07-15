@@ -9,6 +9,7 @@ export interface Product {
   shippingCost: number;
   sellPrice: number;
   status: 'active' | 'rejected';
+  description?: string;
 }
 
 export interface Customer {
