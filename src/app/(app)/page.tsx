@@ -302,7 +302,12 @@ export default function DashboardPage() {
                     </SelectTrigger>
                     <SelectContent>
                         {products.filter(p => p.status === 'active').map(p => (
-                            <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
+                            <SelectItem key={p.id} value={p.id}>
+                                <div className="flex items-center gap-2">
+                                    <Image src={p.image} alt={p.title} width={24} height={24} className="rounded-sm" data-ai-hint="product photo" />
+                                    <span>{p.title}</span>
+                                </div>
+                            </SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
