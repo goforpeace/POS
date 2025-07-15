@@ -71,7 +71,7 @@ export default function SalesListPage() {
         break;
     }
 
-    return tempSales.sort((a,b) => b.date.getTime() - a.date.getTime());
+    return tempSales.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   }, [sales, filter, timeFilter, customDateRange]);
   
@@ -202,7 +202,10 @@ export default function SalesListPage() {
                   <TableCell className="font-medium">{sale.id}</TableCell>
                   <TableCell>{sale.customer.name}</TableCell>
                   <TableCell>
-                     {sale.items.map(item => `${item.product.title} (x${item.quantity})`).join(', ')}
+                     {sale.items && sale.items.length > 0
+                        ? sale.items.map(item => `${item.product.title} (x${item.quantity})`).join(', ')
+                        : 'N/A'
+                     }
                   </TableCell>
                   <TableCell className="text-right">Tk. {sale.total.toLocaleString()}</TableCell>
                   <TableCell>
