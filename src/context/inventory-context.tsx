@@ -2,11 +2,11 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import type { Product, Sale } from '@/lib/types';
+import type { Product, Sale, SaleItem } from '@/lib/types';
 import { mockProducts, mockSales } from '@/lib/mock-data';
 
 // Define a new type for adding a sale that includes the optional unitPrice
-type AddSaleData = Omit<Sale, 'id' | 'date'> & { unitPrice?: number };
+type AddSaleData = Omit<Sale, 'id' | 'date'>;
 
 interface InventoryContextType {
   products: Product[];
@@ -111,30 +111,24 @@ export const InventoryProvider = ({ children }: { children: ReactNode }) => {
   const addSale = (saleData: AddSaleData): Sale => {
     const nextCounter = invoiceCounter + 1;
     
-    const productForSale = {
-      ...saleData.product,
-      sellPrice: saleData.unitPrice !== undefined ? saleData.unitPrice : saleData.product.sellPrice,
-    };
-
     const newSale: Sale = {
-      customer: saleData.customer,
-      product: productForSale,
-      quantity: saleData.quantity,
-      discount: saleData.discount,
-      deliveryCharge: saleData.deliveryCharge || 0,
-      total: saleData.total,
-      id: `Inv-${nextCounter}`,
-      date: new Date(),
+        ...saleData,
+        id: `Inv-${nextCounter}`,
+        date: new Date(),
     };
     
     setSales(prev => [newSale, ...prev]);
     setInvoiceCounter(nextCounter);
 
-    setProducts(prev => prev.map(p => 
-        p.id === newSale.product.id 
-        ? {...p, quantity: p.quantity - newSale.quantity}
-        : p
-    ));
+    // Decrease stock for each item in the sale
+    newSale.items.forEach(item => {
+        setProducts(prev => prev.map(p => 
+            p.id === item.product.id 
+            ? {...p, quantity: p.quantity - item.quantity}
+            : p
+        ));
+    });
+
     return newSale;
   };
 
@@ -142,12 +136,16 @@ export const InventoryProvider = ({ children }: { children: ReactNode }) => {
     const saleToDelete = sales.find(s => s.id === saleId);
     if (!saleToDelete) return;
 
-    // Add product quantity back to stock
-    setProducts(prev => prev.map(p =>
-      p.id === saleToDelete.product.id
-        ? { ...p, quantity: p.quantity + saleToDelete.quantity }
-        : p
-    ));
+    // Add product quantity back to stock for each item
+    if (saleToDelete.items && Array.isArray(saleToDelete.items)) {
+      saleToDelete.items.forEach(item => {
+          setProducts(prev => prev.map(p =>
+              p.id === item.product.id
+              ? { ...p, quantity: p.quantity + item.quantity }
+              : p
+          ));
+      });
+    }
 
     // Remove sale from sales list
     setSales(prev => prev.filter(s => s.id !== saleId));
@@ -184,4 +182,4 @@ export const useInventory = () => {
   return context;
 };
 
-export type { Product, Sale };
+export type { Product, Sale, SaleItem };

@@ -1,6 +1,6 @@
 
 'use client';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,23 +30,25 @@ const StatCard = ({ title, value, icon, description }: { title: string; value: s
 );
 
 export default function DashboardPage() {
-  const { sales, products } = useInventory();
+  const { sales, products, getProductById } = useInventory();
+  const [isClient, setIsClient] = useState(false);
   const [timeFilter, setTimeFilter] = useState('7days');
-  const [shipmentFilter, setShipmentFilter] = useState('all');
   const [yearFilter, setYearFilter] = useState(new Date().getFullYear().toString());
   const [monthFilter, setMonthFilter] = useState((new Date().getMonth() + 1).toString());
   const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>();
 
-  const uniqueShipments = useMemo(() => ['all', ...Array.from(new Set(products.map(p => p.shipment)))], [products]);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+  
   const availableYears = useMemo(() => {
     const years = new Set(sales.map(s => new Date(s.date).getFullYear()));
     return Array.from(years).sort((a,b) => b-a);
   }, [sales]);
 
   const filteredProducts = useMemo(() => {
-    if (shipmentFilter === 'all') return products.filter(p => p.status === 'active');
-    return products.filter(p => p.shipment === shipmentFilter && p.status === 'active');
-  }, [products, shipmentFilter]);
+    return products.filter(p => p.status === 'active');
+  }, [products]);
 
   const rejectedStockValue = products
     .filter(p => p.status === 'rejected')
@@ -54,10 +56,6 @@ export default function DashboardPage() {
 
   const filteredSales = useMemo(() => {
     let tempSales = sales;
-
-    if (shipmentFilter !== 'all') {
-        tempSales = tempSales.filter(s => s.product && s.product.shipment === shipmentFilter);
-    }
 
     const now = new Date();
     switch (timeFilter) {
@@ -90,7 +88,7 @@ export default function DashboardPage() {
       default:
         return tempSales;
     }
-  }, [sales, timeFilter, shipmentFilter, yearFilter, monthFilter, customDateRange]);
+  }, [sales, timeFilter, yearFilter, monthFilter, customDateRange]);
   
   const getProductRevenue = (sale: typeof sales[0]) => {
     return sale.total - (sale.deliveryCharge || 0);
@@ -100,15 +98,22 @@ export default function DashboardPage() {
   
   const totalProfit = useMemo(() => {
     return filteredSales.reduce((acc, sale) => {
-      if (!sale.product) {
-        return acc; // Skip this sale if product info is missing
-      }
       const revenue = getProductRevenue(sale);
-      const costOfGoods = (sale.product.buyPrice + sale.product.shippingCost) * sale.quantity;
+      if (!sale.items || !Array.isArray(sale.items)) {
+          return acc + revenue; // Or some other default behavior
+      }
+      const costOfGoods = sale.items.reduce((itemAcc, item) => {
+        // Here we need to find the original product to get its cost
+        const originalProduct = getProductById(item.product.id);
+        if (originalProduct) {
+          return itemAcc + (originalProduct.buyPrice + originalProduct.shippingCost) * item.quantity;
+        }
+        return itemAcc;
+      }, 0);
       const profit = revenue - costOfGoods;
       return acc + profit;
     }, 0);
-  }, [filteredSales]);
+  }, [filteredSales, getProductById]);
 
   const dailySales = sales
     .filter(s => new Date(s.date).toDateString() === new Date().toDateString())
@@ -129,6 +134,9 @@ export default function DashboardPage() {
     return acc;
   }, [] as {date: string, total: number}[]).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
+  if (!isClient) {
+    return null; // Or a loading spinner
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -137,7 +145,7 @@ export default function DashboardPage() {
           <p className="mt-2 text-lg">Your Point of Sale & Inventory Dashboard</p>
         </div>
       <Card className="relative w-full h-64 overflow-hidden">
-        <Image src="/7492437.png" alt="Freesia Finds Banner" layout="fill" objectFit="cover" data-ai-hint="fashion boutique" />
+        <Image src="https://placehold.co/1200x300.png" alt="Freesia Finds Banner" layout="fill" objectFit="cover" data-ai-hint="fashion boutique" />
         <div className="absolute top-4 right-4 flex gap-2">
           <Button variant="secondary" size="icon" asChild>
             <Link href="https://facebook.com/freesia.finds" target="_blank">
@@ -166,13 +174,6 @@ export default function DashboardPage() {
           <div className="flex flex-wrap justify-between items-center gap-4">
             <CardTitle>Sales Report</CardTitle>
             <div className="flex flex-wrap items-center gap-2">
-                <Select onValueChange={setShipmentFilter} defaultValue={shipmentFilter}>
-                    <SelectTrigger className="w-[180px]"><SelectValue placeholder="Filter by Shipment" /></SelectTrigger>
-                    <SelectContent>
-                        {uniqueShipments.map(s => <SelectItem key={s} value={s}>{s === 'all' ? 'All Shipments' : s}</SelectItem>)}
-                    </SelectContent>
-                </Select>
-
                 <Button variant={timeFilter === '7days' ? 'default' : 'outline'} size="sm" onClick={() => setTimeFilter('7days')}>Last 7 Days</Button>
                 <Button variant={timeFilter === '15days' ? 'default' : 'outline'} size="sm" onClick={() => setTimeFilter('15days')}>Last 15 Days</Button>
                 <Button variant={timeFilter === '30days' ? 'default' : 'outline'} size="sm" onClick={() => setTimeFilter('30days')}>Last 30 Days</Button>
@@ -261,5 +262,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    

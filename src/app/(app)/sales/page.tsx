@@ -37,9 +37,9 @@ export default function SalesListPage() {
 
   const filteredSales = useMemo(() => {
     let tempSales = sales.filter(s =>
-      s.product.title.toLowerCase().includes(filter.toLowerCase()) ||
       s.customer.name.toLowerCase().includes(filter.toLowerCase()) ||
-      s.id.toLowerCase().includes(filter.toLowerCase())
+      s.id.toLowerCase().includes(filter.toLowerCase()) ||
+      (s.items && s.items.some(item => item.product.title.toLowerCase().includes(filter.toLowerCase())))
     );
 
     const now = new Date();
@@ -88,19 +88,22 @@ export default function SalesListPage() {
   };
 
   const handleDownloadCSV = () => {
-    const dataToExport = filteredSales.map(sale => ({
-      "Invoice ID": sale.id,
-      "Date": format(sale.date, 'yyyy-MM-dd'),
-      "Customer Name": sale.customer.name,
-      "Customer Phone": sale.customer.phone,
-      "Customer Address": sale.customer.address,
-      "Product Title": sale.product.title,
-      "Product Shipment": sale.product.shipment,
-      "Quantity": sale.quantity,
-      "Unit Price": sale.product.sellPrice,
-      "Discount": sale.discount,
-      "Total": sale.total,
-    }));
+    const dataToExport = filteredSales.flatMap(sale => 
+        sale.items.map(item => ({
+            "Invoice ID": sale.id,
+            "Date": format(sale.date, 'yyyy-MM-dd'),
+            "Customer Name": sale.customer.name,
+            "Customer Phone": sale.customer.phone,
+            "Customer Address": sale.customer.address,
+            "Product Title": item.product.title,
+            "Quantity": item.quantity,
+            "Unit Price": item.unitPrice,
+            "Item Total": item.quantity * item.unitPrice,
+            "Invoice Discount": sale.discount,
+            "Invoice Delivery Charge": sale.deliveryCharge,
+            "Invoice Total": sale.total,
+        }))
+    );
 
     const csv = Papa.unparse(dataToExport);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -187,8 +190,7 @@ export default function SalesListPage() {
                 <TableHead>Date</TableHead>
                 <TableHead>Invoice ID</TableHead>
                 <TableHead>Customer</TableHead>
-                <TableHead>Product</TableHead>
-                <TableHead className="text-right">Quantity</TableHead>
+                <TableHead>Products</TableHead>
                 <TableHead className="text-right">Total</TableHead>
                 <TableHead className="w-12">Actions</TableHead>
               </TableRow>
@@ -199,8 +201,9 @@ export default function SalesListPage() {
                   <TableCell>{new Date(sale.date).toLocaleDateString()}</TableCell>
                   <TableCell className="font-medium">{sale.id}</TableCell>
                   <TableCell>{sale.customer.name}</TableCell>
-                  <TableCell>{sale.product.title}</TableCell>
-                  <TableCell className="text-right">{sale.quantity}</TableCell>
+                  <TableCell>
+                     {sale.items.map(item => `${item.product.title} (x${item.quantity})`).join(', ')}
+                  </TableCell>
                   <TableCell className="text-right">Tk. {sale.total.toLocaleString()}</TableCell>
                   <TableCell>
                     <AlertDialog>

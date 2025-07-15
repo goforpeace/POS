@@ -3,7 +3,6 @@ export interface Product {
   id: string;
   image: string;
   title: string;
-  shipment: string;
   quantity: number;
   buyPrice: number;
   shippingCost: number;
@@ -18,11 +17,17 @@ export interface Customer {
   address: string;
 }
 
+export interface SaleItem {
+    product: Product;
+    quantity: number;
+    unitPrice: number;
+    title: string; // Allow for custom titles on invoice
+}
+
 export interface Sale {
   id: string;
   customer: Customer;
-  product: Product;
-  quantity: number;
+  items: SaleItem[];
   discount: number;
   deliveryCharge: number;
   total: number;

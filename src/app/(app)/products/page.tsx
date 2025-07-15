@@ -38,7 +38,6 @@ import { Textarea } from '@/components/ui/textarea';
 
 const editProductSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
-  shipment: z.string().min(1, 'Shipment info is required'),
   quantity: z.coerce.number().min(0, 'Quantity cannot be negative'),
   buyPrice: z.coerce.number().min(0, 'Buy price cannot be negative'),
   shippingCost: z.coerce.number().min(0, 'Shipping cost cannot be negative'),
@@ -69,8 +68,7 @@ export default function ProductsPage() {
   const activeProducts = products.filter(p => p.status === 'active');
 
   const filteredProducts = activeProducts.filter(p =>
-    p.title.toLowerCase().includes(filter.toLowerCase()) ||
-    p.shipment.toLowerCase().includes(filter.toLowerCase())
+    p.title.toLowerCase().includes(filter.toLowerCase())
   );
   
   const handleReject = (productId: string) => {
@@ -111,7 +109,7 @@ export default function ProductsPage() {
           <div className="flex justify-between items-center">
             <CardTitle>Active Products</CardTitle>
             <Input
-              placeholder="Filter by title or shipment..."
+              placeholder="Filter by title..."
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
               className="max-w-sm"
@@ -124,7 +122,6 @@ export default function ProductsPage() {
               <TableRow>
                 <TableHead className="w-20">Image</TableHead>
                 <TableHead>Title</TableHead>
-                <TableHead>Shipment</TableHead>
                 <TableHead className="text-right">Quantity</TableHead>
                 <TableHead className="text-right">Buy Price</TableHead>
                 <TableHead className="text-right">Shipping Cost</TableHead>
@@ -146,7 +143,6 @@ export default function ProductsPage() {
                     />
                   </TableCell>
                   <TableCell className="font-medium">{product.title}</TableCell>
-                  <TableCell>{product.shipment}</TableCell>
                   <TableCell className="text-right">{product.quantity}</TableCell>
                   <TableCell className="text-right">Tk. {product.buyPrice.toLocaleString()}</TableCell>
                   <TableCell className="text-right">Tk. {product.shippingCost.toLocaleString()}</TableCell>
@@ -212,7 +208,7 @@ export default function ProductsPage() {
           <DialogHeader>
             <DialogTitle>{productToView?.title}</DialogTitle>
              <DialogDescription>
-                Shipment: {productToView?.shipment} | Quantity in stock: {productToView?.quantity}
+                Quantity in stock: {productToView?.quantity}
               </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
@@ -270,21 +266,7 @@ export default function ProductsPage() {
                       </FormItem>
                     )}
                   />
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="shipment"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Shipment</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
+                  <FormField
                       control={form.control}
                       name="quantity"
                       render={({ field }) => (
@@ -297,7 +279,6 @@ export default function ProductsPage() {
                         </FormItem>
                       )}
                     />
-                  </div>
                    <div className="grid grid-cols-3 gap-4">
                       <FormField
                         control={form.control}

@@ -23,7 +23,6 @@ import { Textarea } from '@/components/ui/textarea';
 
 const addProductSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
-  shipment: z.string().min(1, 'Shipment info is required'),
   quantity: z.coerce.number().min(0, 'Quantity cannot be negative'),
   buyPrice: z.coerce.number().min(0, 'Buy price cannot be negative'),
   shippingCost: z.coerce.number().min(0, 'Shipping cost cannot be negative'),
@@ -43,7 +42,6 @@ export default function AddProductPage() {
     resolver: zodResolver(addProductSchema),
     defaultValues: {
       title: '',
-      shipment: '',
       quantity: 0,
       buyPrice: 0,
       shippingCost: 0,
@@ -76,7 +74,6 @@ export default function AddProductPage() {
   const onSubmit = (values: z.infer<typeof addProductSchema>) => {
     addProduct({
       title: values.title,
-      shipment: values.shipment,
       quantity: values.quantity,
       buyPrice: values.buyPrice,
       shippingCost: values.shippingCost,
@@ -102,19 +99,34 @@ export default function AddProductPage() {
                 <CardTitle>Product Details</CardTitle>
               </CardHeader>
               <CardContent className="grid gap-6">
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Product Title</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. Elegant Lace Dress" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Product Title</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g. Elegant Lace Dress" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="quantity"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Quantity</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
                  <FormField
                   control={form.control}
                   name="description"
@@ -141,34 +153,6 @@ export default function AddProductPage() {
                     </FormItem>
                   )}
                 />
-                <div className="grid grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="shipment"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Shipment</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g. 1st Shipment" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="quantity"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Quantity</FormLabel>
-                        <FormControl>
-                          <Input type="number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
               </CardContent>
             </Card>
 
