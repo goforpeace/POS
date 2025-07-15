@@ -3,7 +3,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   SidebarProvider,
   Sidebar,
@@ -28,6 +28,7 @@ import {
   ChevronDown,
   ClipboardList,
   MessageSquareQuote,
+  LogOut,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import {
@@ -35,13 +36,22 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from './ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import Image from 'next/image';
+import { useAuth } from '@/context/auth-context';
 
 const AppShell = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
+  const { user, logout } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await logout();
+    router.push('/login');
+  };
 
   const isActive = (path: string, exact = false) => {
     return exact ? pathname === path : pathname.startsWith(path);
@@ -166,9 +176,9 @@ const AppShell = ({ children }: { children: React.ReactNode }) => {
             <div className="flex items-center gap-2">
               <Avatar>
                 <AvatarImage src="https://placehold.co/100x100.png" data-ai-hint="logo company" />
-                <AvatarFallback>FF</AvatarFallback>
+                <AvatarFallback>{user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
               </Avatar>
-              <span className="font-semibold">Store Manager</span>
+              <span className="font-semibold truncate">{user?.email}</span>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -177,9 +187,13 @@ const AppShell = ({ children }: { children: React.ReactNode }) => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem>Profile</DropdownMenuItem>
-                <DropdownMenuItem>Settings</DropdownMenuItem>
-                <DropdownMenuItem>Logout</DropdownMenuItem>
+                <DropdownMenuItem disabled>Profile</DropdownMenuItem>
+                <DropdownMenuItem disabled>Settings</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Logout</span>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
