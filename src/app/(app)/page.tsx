@@ -328,7 +328,7 @@ export default function DashboardPage() {
                              />
                          </div>
                          <div className="flex justify-between items-center pt-2 border-t">
-                            <span className="text-sm font-medium text-primary">Expected Profit:</span>
+                            <span className="font-bold text-base text-foreground">Expected Profit:</span>
                             <span className={`font-bold text-lg ${expectedProfit > 0 ? 'text-green-600' : 'text-red-600'}`}>Tk. {expectedProfit.toLocaleString()}</span>
                         </div>
                     </div>
