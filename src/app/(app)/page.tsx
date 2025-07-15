@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
-import { ArrowUpRight, Calendar as CalendarIcon, DollarSign, Package, ShoppingBag, Users, PackageX } from 'lucide-react';
+import { ArrowUpRight, Calendar as CalendarIcon, DollarSign, Package, ShoppingBag, Users, PackageX, TrendingUp } from 'lucide-react';
 import FacebookLogo from '@/components/icons/FacebookLogo';
 import DeliveryLogo from '@/components/icons/DeliveryLogo';
 import { useInventory } from '@/context/inventory-context';
@@ -98,6 +98,15 @@ export default function DashboardPage() {
 
   const totalRevenue = filteredSales.reduce((acc, sale) => acc + getProductRevenue(sale), 0);
   
+  const totalProfit = useMemo(() => {
+    return filteredSales.reduce((acc, sale) => {
+      const revenue = getProductRevenue(sale);
+      const costOfGoods = (sale.product.buyPrice + sale.product.shippingCost) * sale.quantity;
+      const profit = revenue - costOfGoods;
+      return acc + profit;
+    }, 0);
+  }, [filteredSales]);
+
   const dailySales = sales
     .filter(s => new Date(s.date).toDateString() === new Date().toDateString())
     .reduce((acc, sale) => acc + getProductRevenue(sale), 0);
@@ -140,9 +149,10 @@ export default function DashboardPage() {
         </div>
       </Card>
       
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
         <StatCard title="Daily Sales" value={`Tk. ${dailySales.toLocaleString()}`} icon={<DollarSign className="h-4 w-4 text-muted-foreground" />} description="Total sales for today" />
         <StatCard title="Total Sales" value={`Tk. ${totalRevenue.toLocaleString()}`} icon={<ShoppingBag className="h-4 w-4 text-muted-foreground" />} description="Based on current filters" />
+        <StatCard title="Total Profit" value={`Tk. ${totalProfit.toLocaleString()}`} icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />} description="Based on current filters" />
         <StatCard title="Total Stock" value={totalStock.toLocaleString()} icon={<Package className="h-4 w-4 text-muted-foreground" />} description="Active stock" />
         <StatCard title="Price of Stock" value={`Tk. ${stockValue.toLocaleString()}`} icon={<Users className="h-4 w-4 text-muted-foreground" />} description="Active stock value" />
         <StatCard title="Rejected Stock Value" value={`Tk. ${rejectedStockValue.toLocaleString()}`} icon={<PackageX className="h-4 w-4 text-muted-foreground" />} description="Total value of rejected items" />
@@ -248,3 +258,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
