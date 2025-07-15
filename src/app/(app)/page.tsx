@@ -47,6 +47,14 @@ export default function DashboardPage() {
     return getProductById(calcProductId);
   }, [calcProductId, getProductById]);
 
+  useEffect(() => {
+    if (selectedProductForCalc) {
+      setCalcSellPrice(selectedProductForCalc.sellPrice.toString());
+    } else {
+      setCalcSellPrice('');
+    }
+  }, [selectedProductForCalc]);
+
   const productCost = useMemo(() => {
     if (!selectedProductForCalc) return 0;
     return selectedProductForCalc.buyPrice + selectedProductForCalc.shippingCost;
@@ -288,7 +296,7 @@ export default function DashboardPage() {
                 <CardDescription>Quickly calculate expected profit for a product.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-                <Select onValueChange={setCalcProductId}>
+                <Select onValueChange={setCalcProductId} value={calcProductId}>
                     <SelectTrigger>
                         <SelectValue placeholder="Select a product..." />
                     </SelectTrigger>
