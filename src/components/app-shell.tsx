@@ -23,12 +23,12 @@ import {
   PackageX,
   ShoppingCart,
   DollarSign,
-  Sparkles,
   Settings,
   ChevronDown,
   ClipboardList,
   MessageSquareQuote,
   LogOut,
+  Sparkles,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import {
@@ -161,14 +161,6 @@ const AppShell = ({ children }: { children: React.ReactNode }) => {
                 </CollapsibleContent>
             </Collapsible>
 
-            <SidebarMenuItem>
-              <Link href="/price-advisor">
-                <SidebarMenuButton isActive={isActive('/price-advisor')}>
-                  <Sparkles />
-                  <span>Price Advisor</span>
-                </SidebarMenuButton>
-              </Link>
-            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter>
